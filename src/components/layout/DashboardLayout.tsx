@@ -137,9 +137,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                                 <div className="absolute inset-0 border-3 border-[#0066CC] border-t-transparent rounded-full animate-spin"></div>
                             </div>
 
-                            <p className="mt-4 text-gray-600 text-sm">
-                                Loading {nextPath.replace('/admin/', '') || 'page'}...
-                            </p>
+
                         </div>
                     </div>
                 )}
