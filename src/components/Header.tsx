@@ -22,6 +22,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage = 'home' }) => {
         { label: 'Home', href: '/' },
         { label: 'About Us', href: '/about' },
         { label: 'Contact Us', href: '/contact' },
+        { label: 'Login', href: '/auth' },
 
     ];
 
