@@ -29,6 +29,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     const router = useRouter();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [activeMenu, setActiveMenu] = useState('Dashboard');
+    const [isLoading, setIsLoading] = useState(false);
+    const [nextPath, setNextPath] = useState('');
 
     // Optimized path matching - runs only when pathname changes
     useEffect(() => {
@@ -69,14 +71,32 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         };
 
         const path = menuToPathMap[label];
+
         if (path && path !== '/admin/logout') {
-            router.push(path);
+            // Show loader
+            setIsLoading(true);
+            setNextPath(path);
+
+            // Small delay to show the loader
+            setTimeout(() => {
+                router.push(path);
+            }, 300);
         } else if (path === '/admin/logout') {
             // Handle logout
             console.log('Logging out...');
-            // router.push('/login');
         }
     };
+
+    // Effect to hide loader when navigation is complete
+    useEffect(() => {
+        if (pathname) {
+            const timer = setTimeout(() => {
+                setIsLoading(false);
+                setNextPath('');
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [pathname]);
 
     return (
         <div className="flex font-inter h-screen bg-[#f3f3f3]">
@@ -88,7 +108,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 ></div>
             )}
 
-            {/* Sidebar */}
+            {/* Sidebar - Always visible */}
             <Sidebar
                 activeMenu={activeMenu}
                 onMenuClick={handleMenuClick}
@@ -97,7 +117,32 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             />
 
             {/* Main Content */}
-            <div className="flex-1 overflow-auto w-full">
+            <div className="flex-1 overflow-auto w-full relative">
+                {/* Loader Overlay - Only over content area */}
+                {isLoading && (
+                    <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex items-center justify-center rounded-lg">
+                        <div className="flex flex-col items-center">
+                            {/* Logo */}
+                            <div className="relative w-[120px] h-[35px] sm:w-[140px] sm:h-[40px] mb-6">
+                                <img
+                                    src="/assets/logo.png"
+                                    alt="RideNow Logo"
+                                    className="absolute w-full h-auto"
+                                />
+                            </div>
+
+                            {/* Spinner */}
+                            <div className="relative w-14 h-14">
+                                <div className="absolute inset-0 border-3 border-gray-300 rounded-full"></div>
+                                <div className="absolute inset-0 border-3 border-[#0066CC] border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+
+                            <p className="mt-4 text-gray-600 text-sm">
+                                Loading {nextPath.replace('/admin/', '') || 'page'}...
+                            </p>
+                        </div>
+                    </div>
+                )}
                 {/* Header */}
                 <Header
                     title={activeMenu}
@@ -105,7 +150,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 />
 
                 {/* Page Content */}
-                <div className="p-4 sm:p-8">
+                <div className="p-4 sm:p-8 relative">
+
+
                     {children}
                 </div>
             </div>
