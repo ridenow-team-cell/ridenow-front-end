@@ -4,6 +4,8 @@ import { Calendar, ChevronDown, Search, Plus, MoreVertical, Filter } from 'lucid
 import DataTable from '@/components/ui/DataTable';
 import FilterSection from '@/components/ui/FilterSection';
 import AddScheduleModal from '@/components/ui/modals/AddScheduleModal';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Route {
     id: number;
@@ -31,6 +33,7 @@ const RoutesSchedulesPage = () => {
     const [activeTab, setActiveTab] = useState<'routes' | 'schedules'>('routes');
     const [showAddRouteModal, setShowAddRouteModal] = useState(false);
     const [showAddScheduleModal, setShowAddScheduleModal] = useState(false);
+    const router = useRouter();
 
     // Sample routes data
     const [routes, setRoutes] = useState<Route[]>([
@@ -143,13 +146,18 @@ const RoutesSchedulesPage = () => {
         }
     ];
 
+    // Handler for add button
+    const handleAddButtonClick = () => {
+        if (activeTab === 'routes') {
+            setShowAddRouteModal(true);
+        } else {
+            // Navigate to add schedule page
+            router.push('/admin/add-schedule');
+        }
+    };
+
     return (
         <div className="p-4 sm:p-6">
-            {/* Page Header */}
-            <div className="mb-6">
-                <h1 className="text-2xl sm:text-3xl font-semibold text-[#343434]">Routes & Schedules</h1>
-            </div>
-
             {/* Tabs */}
             <div className="bg-white rounded-lg mb-6">
                 <div className="flex border-b">
@@ -176,7 +184,7 @@ const RoutesSchedulesPage = () => {
 
             {/* Filter Section */}
             <FilterSection
-                onAdd={() => activeTab === 'routes' ? setShowAddRouteModal(true) : setShowAddScheduleModal(true)}
+                onAdd={handleAddButtonClick}
                 showAddButton={true}
                 addButtonText={activeTab === 'routes' ? 'Add Route' : 'Add Schedule'}
             />
@@ -214,18 +222,18 @@ const RoutesSchedulesPage = () => {
 
             {/* Add Route Modal (Placeholder - You'll need to create this) */}
             {/* {showAddRouteModal && (
-        <AddRouteModal
-          isOpen={showAddRouteModal}
-          onClose={() => setShowAddRouteModal(false)}
-          onSubmit={(data) => {
-            // Handle add route
-            console.log('Add route:', data);
-            setShowAddRouteModal(false);
-          }}
-        />
-      )} */}
+                <AddRouteModal
+                    isOpen={showAddRouteModal}
+                    onClose={() => setShowAddRouteModal(false)}
+                    onSubmit={(data) => {
+                        // Handle add route
+                        console.log('Add route:', data);
+                        setShowAddRouteModal(false);
+                    }}
+                />
+            )} */}
 
-            {/* Add Schedule Modal (Placeholder - You'll need to create this) */}
+            {/* Add Schedule Modal (No longer needed since we're navigating to a separate page) */}
             {showAddScheduleModal && (
                 <AddScheduleModal
                     isOpen={showAddScheduleModal}

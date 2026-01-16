@@ -22,6 +22,7 @@ const pathToMenuMap: Record<string, string> = {
     '/admin/manage-roles': 'Manage Roles',
     '/admin/tickets': 'Tickets',
     '/admin/reviews': 'Reviews',
+    '/admin/add-schedule': 'Add Schedule'
 };
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
