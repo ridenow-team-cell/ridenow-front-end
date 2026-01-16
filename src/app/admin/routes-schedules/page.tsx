@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Calendar, ChevronDown, Search, Plus, MoreVertical, Filter } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import FilterSection from '@/components/ui/FilterSection';
+import AddScheduleModal from '@/components/ui/modals/AddScheduleModal';
 
 interface Route {
     id: number;
@@ -225,17 +226,17 @@ const RoutesSchedulesPage = () => {
       )} */}
 
             {/* Add Schedule Modal (Placeholder - You'll need to create this) */}
-            {/* {showAddScheduleModal && (
-        <AddScheduleModal
-          isOpen={showAddScheduleModal}
-          onClose={() => setShowAddScheduleModal(false)}
-          onSubmit={(data) => {
-            // Handle add schedule
-            console.log('Add schedule:', data);
-            setShowAddScheduleModal(false);
-          }}
-        />
-      )} */}
+            {showAddScheduleModal && (
+                <AddScheduleModal
+                    isOpen={showAddScheduleModal}
+                    onClose={() => setShowAddScheduleModal(false)}
+                    onSubmit={(data) => {
+                        // Handle add schedule
+                        console.log('Add schedule:', data);
+                        setShowAddScheduleModal(false);
+                    }}
+                />
+            )}
         </div>
     );
 };
