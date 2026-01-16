@@ -207,7 +207,7 @@ const AddSchedulePage = () => {
                                     type="text"
                                     value={formData.departureTime}
                                     onChange={(e) => setFormData({ ...formData, departureTime: e.target.value })}
-                                    className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:border-[#0066CC]"
+                                    className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:border-[#0066CC] placeholder:text-[#CBCBCB] text-[#343434]"
                                     placeholder="08:00 AM"
                                 />
                                 <Clock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" />
@@ -221,7 +221,7 @@ const AddSchedulePage = () => {
                                     type="text"
                                     value={formData.arrivalTime}
                                     onChange={(e) => setFormData({ ...formData, arrivalTime: e.target.value })}
-                                    className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:border-[#0066CC]"
+                                    className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:border-[#0066CC] placeholder:text-[#CBCBCB] text-[#343434]"
                                     placeholder="04:30 PM"
                                 />
                                 <Clock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" />
@@ -339,7 +339,7 @@ const AddSchedulePage = () => {
                         <div className="border border-gray-300 rounded-lg p-4 space-y-2">
                             {formData.stops.map((stop) => (
                                 <div key={stop.id} className="border border-gray-200 rounded-lg p-3">
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1 sm:gap-3">
                                         <button
                                             type="button"
                                             onClick={() => toggleStopExpansion(stop.id)}
@@ -370,7 +370,7 @@ const AddSchedulePage = () => {
                                                     );
                                                     setFormData({ ...formData, stops: newStops });
                                                 }}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg placeholder:text-[#CBCBCB] text-[#343434]"
                                                 placeholder="Stop name"
                                             />
                                             <div className="grid grid-cols-2 gap-3">
@@ -383,7 +383,7 @@ const AddSchedulePage = () => {
                                                         );
                                                         setFormData({ ...formData, stops: newStops });
                                                     }}
-                                                    className="px-3 py-2 border border-gray-300 rounded-lg"
+                                                    className="px-3 py-2 border border-gray-300 rounded-lg placeholder:text-[#CBCBCB] text-[#343434]"
                                                     placeholder="Latitude"
                                                 />
                                                 <input
@@ -395,7 +395,7 @@ const AddSchedulePage = () => {
                                                         );
                                                         setFormData({ ...formData, stops: newStops });
                                                     }}
-                                                    className="px-3 py-2 border border-gray-300 rounded-lg"
+                                                    className="px-3 py-2 border border-gray-300 rounded-lg placeholder:text-[#CBCBCB] text-[#343434]"
                                                     placeholder="Longitude"
                                                 />
                                             </div>
