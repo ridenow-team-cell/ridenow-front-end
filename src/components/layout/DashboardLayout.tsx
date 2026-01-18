@@ -10,16 +10,16 @@ interface DashboardLayoutProps {
 
 // Move this outside component to prevent recreation
 const pathToMenuMap: Record<string, string> = {
-    '/admin': 'Dashboard',
+    '/admin': 'Analytics & Overview',
     '/admin/manage-bus': 'Manage Bus',
     '/admin/manage-users': 'Manage Users',
     '/admin/manage-drivers': 'Manage Drivers',
     '/admin/routes-schedules': 'Routes & Schedules',
     '/admin/live-tracking': 'Live Tracking',
     '/admin/revenue': 'Revenue',
-    '/admin/reports': 'Reports',
+    // '/admin/reports': 'Reports',
     '/admin/support': 'Support',
-    '/admin/manage-roles': 'Manage Roles',
+    // '/admin/manage-roles': 'Manage Roles',
     '/admin/tickets': 'Tickets',
     '/admin/reviews': 'Reviews',
     '/admin/add-schedule': 'Add Schedule'
@@ -56,7 +56,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
         // Get the path and navigate - state is already updated
         const menuToPathMap: Record<string, string> = {
-            'Dashboard': '/admin',
+            'Analytics & Overview': '/admin',
             'Manage Bus': '/admin/manage-bus',
             'Manage Users': '/admin/manage-users',
             'Manage Drivers': '/admin/manage-drivers',
@@ -65,7 +65,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             'Revenue': '/admin/revenue',
             'Reports': '/admin/reports',
             'Support': '/admin/support',
-            'Manage Roles': '/admin/manage-roles',
+            // 'Manage Roles': '/admin/manage-roles',
             'Tickets': '/admin/tickets',
             'Reviews': '/admin/reviews',
             'Logout': '/admin/logout'

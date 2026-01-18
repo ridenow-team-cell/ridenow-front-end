@@ -24,14 +24,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const menuToPathMap: Record<string, string> = {
-        'Dashboard': '/admin',
+        'Analytics & Overview': '/admin',
         'Manage Bus': '/admin/manage-bus',
         'Manage Users': '/admin/manage-users',
         'Manage Drivers': '/admin/manage-drivers',
         'Routes & Schedules': '/admin/routes-schedules',
         'Live Tracking': '/admin/live-tracking',
         'Revenue': '/admin/revenue',
-        'Reports': '/admin/reports',
+        // 'Reports': '/admin/reports',
         'Support': '/admin/support',
         // 'Manage Roles': '/admin/manage-roles',
         'Tickets': '/admin/tickets',
@@ -95,14 +95,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
 
     const sidebarItems = [
-        { iconSrc: '/assets/icons/dashboard.png', label: 'Dashboard' },
+        { iconSrc: '/assets/icons/dashboard.png', label: 'Analytics & Overview' },
         { iconSrc: '/assets/icons/bus.png', label: 'Manage Bus' },
         { iconSrc: '/assets/icons/users.png', label: 'Manage Users' },
         { iconSrc: '/assets/icons/driver.png', label: 'Manage Drivers' },
         { iconSrc: '/assets/icons/calendar.png', label: 'Routes & Schedules' },
         { iconSrc: '/assets/icons/target.png', label: 'Live Tracking' },
         { iconSrc: '/assets/icons/revenue.png', label: 'Revenue' },
-        { iconSrc: '/assets/icons/chart.png', label: 'Reports' },
+        // { iconSrc: '/assets/icons/chart.png', label: 'Reports' },
         { iconSrc: '/assets/icons/support.png', label: 'Support' },
         // { iconSrc: '/assets/icons/shield.png', label: 'Manage Roles' },
         { iconSrc: '/assets/icons/ticket.png', label: 'Tickets' },
