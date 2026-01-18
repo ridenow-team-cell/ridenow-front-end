@@ -327,12 +327,12 @@ const SupportPage = () => {
 
                             <DataTable
                                 columns={columns}
-                                data={ticketsData.items || []}
+                                data={ticketsData?.items || []}
                                 actions={actions}
                             />
 
                             {/* Pagination */}
-                            {ticketsData && ticketsData.length > 0 && (
+                            {ticketsData && ticketsData?.items.length > 0 && (
                                 <div className="mt-6">
                                     <Pagination
                                         currentPage={ticketsData.page}
@@ -345,7 +345,7 @@ const SupportPage = () => {
                             )}
 
                             {/* No Data Message */}
-                            {(!ticketsData || ticketsData.length === 0) && (
+                            {(!ticketsData || ticketsData.items.length === 0) && (
                                 <div className="text-center py-8">
                                     <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                                     <h3 className="text-lg font-medium text-gray-800 mb-2">No tickets found</h3>

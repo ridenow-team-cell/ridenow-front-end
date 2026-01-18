@@ -230,7 +230,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                                                     <User size={16} className="text-gray-600" />
                                                 </div>
                                                 <div>
-                                                    <div className="font-medium">{user.name}</div>
+                                                    <div className="font-medium text-gray-400">{user.name}</div>
                                                     <div className="text-sm text-gray-600">{user.email}</div>
                                                 </div>
                                             </button>
@@ -278,7 +278,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                                             >
                                                 <Calendar size={20} className="text-blue-600" />
                                                 <div>
-                                                    <div className="font-medium">Schedule {schedule.id.slice(0, 8)}...</div>
+                                                    <div className="font-medium text-gray-400">Schedule {schedule.id.slice(0, 8)}...</div>
                                                     <div className="text-sm text-gray-600">
                                                         {formatScheduleInfo(schedule)}
                                                     </div>
@@ -341,7 +341,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                                             >
                                                 <MapPin size={16} className="text-gray-400" />
                                                 <div className="text-left">
-                                                    <div className="font-medium">{stop.name}</div>
+                                                    <div className="font-medium text-gray-400">{stop.name}</div>
                                                     <div className="text-sm text-gray-600">Stop #{stop.order}</div>
                                                 </div>
                                             </button>
@@ -371,7 +371,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                                                 >
                                                     <MapPin size={16} className="text-gray-400" />
                                                     <div className="text-left">
-                                                        <div className="font-medium">{stop.name}</div>
+                                                        <div className="font-medium text-gray-400">{stop.name}</div>
                                                         <div className="text-sm text-gray-600">Stop #{stop.order}</div>
                                                     </div>
                                                 </button>

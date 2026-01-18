@@ -71,7 +71,7 @@ const AssignTicketModal: React.FC<AssignTicketModalProps> = ({
                                     <User size={20} className="text-gray-600" />
                                 </div>
                                 <div>
-                                    <div className="font-medium">{currentUser.name}</div>
+                                    <div className="font-medium text-gray-400">{currentUser.name}</div>
                                     <div className="text-sm text-gray-600">{currentUser.role}</div>
                                 </div>
                             </div>
@@ -95,7 +95,7 @@ const AssignTicketModal: React.FC<AssignTicketModalProps> = ({
                                                 <User size={16} className="text-gray-600" />
                                             </div>
                                             <div className="flex-1">
-                                                <div className="font-medium">{user.name}</div>
+                                                <div className="font-medium text-gray-400">{user.name}</div>
                                                 <div className="text-sm text-gray-600">{user.role}</div>
                                             </div>
                                         </button>

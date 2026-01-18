@@ -433,7 +433,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
                                                 onClick={() => handleBusSelect('')}
                                                 className="w-full text-left px-4 py-3 hover:bg-gray-50 text-gray-500"
                                             >
-                                                <div className="font-medium">No Bus</div>
+                                                <div className="font-medium text-gray-400">No Bus</div>
                                                 <div className="text-sm">Remove bus assignment</div>
                                             </button>
                                             {buses.length > 0 ? (
@@ -444,7 +444,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
                                                         onClick={() => handleBusSelect(bus.id)}
                                                         className="w-full text-left px-4 py-3 hover:bg-gray-50"
                                                     >
-                                                        <div className="font-medium">{bus.name}</div>
+                                                        <div className="font-medium text-gray-400">{bus.name}</div>
                                                         <div className="text-sm text-gray-600">
                                                             Registration: {bus.registrationName} • Seats: {bus.totalSeats}
                                                         </div>
@@ -504,7 +504,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
                                                 onClick={() => handleRouteSelect('')}
                                                 className="w-full text-left px-4 py-3 hover:bg-gray-50 text-gray-500"
                                             >
-                                                <div className="font-medium">No Route</div>
+                                                <div className="font-medium text-gray-400">No Route</div>
                                                 <div className="text-sm">Remove route assignment</div>
                                             </button>
                                             {routes.length > 0 ? (
@@ -515,7 +515,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
                                                         onClick={() => handleRouteSelect(route.id)}
                                                         className="w-full text-left px-4 py-3 hover:bg-gray-50"
                                                     >
-                                                        <div className="font-medium">{route.name}</div>
+                                                        <div className="font-medium text-gray-400">{route.name}</div>
                                                         <div className="text-sm text-gray-600">
                                                             {route.description} • {route.stops?.length || 0} stops
                                                         </div>

@@ -89,7 +89,7 @@ const AssignBusModal: React.FC<AssignBusModalProps> = ({
                                     >
                                         <Car size={20} />
                                         <div>
-                                            <div className="font-medium">No Bus</div>
+                                            <div className="font-medium text-gray-400">No Bus</div>
                                             <div className="text-sm">Remove bus assignment</div>
                                         </div>
                                     </button>
@@ -104,7 +104,7 @@ const AssignBusModal: React.FC<AssignBusModalProps> = ({
                                         >
                                             <Car size={20} className="text-blue-600" />
                                             <div>
-                                                <div className="font-medium">{bus.name}</div>
+                                                <div className="font-medium text-gray-400">{bus.name}</div>
                                                 <div className="text-sm text-gray-600">
                                                     Registration: {bus.registrationName}
                                                 </div>

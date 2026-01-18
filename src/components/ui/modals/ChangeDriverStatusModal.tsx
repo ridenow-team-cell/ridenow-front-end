@@ -124,7 +124,7 @@ const ChangeStatusModal: React.FC<ChangeStatusModalProps> = ({
                                         <currentStatusObj.icon size={20} className={currentStatusObj.color} />
                                     </div>
                                     <div>
-                                        <div className="font-medium">{currentStatusObj.label}</div>
+                                        <div className="font-medium text-gray-400">{currentStatusObj.label}</div>
                                         <div className="text-sm text-gray-600">{currentStatusObj.description}</div>
                                     </div>
                                 </div>
@@ -148,7 +148,7 @@ const ChangeStatusModal: React.FC<ChangeStatusModalProps> = ({
                                                     <option.icon size={20} className={option.color} />
                                                 </div>
                                                 <div>
-                                                    <div className="font-medium">{option.label}</div>
+                                                    <div className="font-medium text-gray-400">{option.label}</div>
                                                     <div className="text-sm text-gray-600">{option.description}</div>
                                                 </div>
                                             </button>

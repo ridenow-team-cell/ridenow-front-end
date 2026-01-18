@@ -91,7 +91,7 @@ const AssignRouteModal: React.FC<AssignRouteModalProps> = ({
                                     >
                                         <RouteIcon size={20} />
                                         <div>
-                                            <div className="font-medium">No Route</div>
+                                            <div className="font-medium text-gray-400">No Route</div>
                                             <div className="text-sm">Remove route assignment</div>
                                         </div>
                                     </button>
@@ -106,7 +106,7 @@ const AssignRouteModal: React.FC<AssignRouteModalProps> = ({
                                         >
                                             <RouteIcon size={20} className="text-green-600" />
                                             <div>
-                                                <div className="font-medium">{route.name}</div>
+                                                <div className="font-medium text-gray-400">{route.name}</div>
                                                 <div className="text-sm text-gray-600">
                                                     {route.stops} stops • {route.distance} km
                                                 </div>

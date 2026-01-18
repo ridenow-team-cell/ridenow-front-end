@@ -412,7 +412,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                             <User size={16} className="text-gray-600" />
                                         </div>
                                         <div>
-                                            <div className="font-medium">{currentStaff.name}</div>
+                                            <div className="font-medium text-gray-400">{currentStaff.name}</div>
                                             <div className="text-sm text-gray-600">{currentStaff.role}</div>
                                         </div>
                                     </div>
@@ -435,7 +435,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                                     <Users size={16} className="text-gray-600" />
                                                 </div>
                                                 <div>
-                                                    <div className="font-medium">Unassigned</div>
+                                                    <div className="font-medium text-gray-400">Unassigned</div>
                                                     <div className="text-sm">Assign later</div>
                                                 </div>
                                             </button>
@@ -452,7 +452,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                                         <User size={16} className="text-gray-600" />
                                                     </div>
                                                     <div>
-                                                        <div className="font-medium">{user.fullName || user.name}</div>
+                                                        <div className="font-medium text-gray-400">{user.fullName || user.name}</div>
                                                         <div className="text-sm text-gray-600">{user.role}</div>
                                                     </div>
                                                 </button>
@@ -480,7 +480,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                     <div className="flex items-center gap-3">
                                         <Bus size={20} className="text-gray-600" />
                                         <div>
-                                            <div className="font-medium">{currentBus.name}</div>
+                                            <div className="font-medium text-gray-400">{currentBus.name}</div>
                                             {currentBus.registrationName && (
                                                 <div className="text-sm text-gray-600">{currentBus.registrationName}</div>
                                             )}
@@ -502,7 +502,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                             >
                                                 <Bus size={20} />
                                                 <div>
-                                                    <div className="font-medium">None</div>
+                                                    <div className="font-medium text-gray-400">None</div>
                                                     <div className="text-sm">No bus related</div>
                                                 </div>
                                             </button>
@@ -516,7 +516,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                                 >
                                                     <Bus size={20} className="text-blue-600" />
                                                     <div>
-                                                        <div className="font-medium">{bus.name}</div>
+                                                        <div className="font-medium text-gray-400">{bus.name}</div>
                                                         <div className="text-sm text-gray-600">{bus.registrationName}</div>
                                                     </div>
                                                 </button>
@@ -544,7 +544,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                     <div className="flex items-center gap-3">
                                         <User size={20} className="text-gray-600" />
                                         <div>
-                                            <div className="font-medium">{currentDriver.name}</div>
+                                            <div className="font-medium text-gray-400">{currentDriver.name}</div>
                                             {currentDriver.licenseNumber && (
                                                 <div className="text-sm text-gray-600">{currentDriver.licenseNumber}</div>
                                             )}
@@ -566,7 +566,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                             >
                                                 <User size={20} />
                                                 <div>
-                                                    <div className="font-medium">None</div>
+                                                    <div className="font-medium text-gray-400">None</div>
                                                     <div className="text-sm">No driver related</div>
                                                 </div>
                                             </button>
@@ -580,7 +580,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                                 >
                                                     <User size={20} className="text-green-600" />
                                                     <div>
-                                                        <div className="font-medium">{driver.fullName || driver.name}</div>
+                                                        <div className="font-medium text-gray-400">{driver.fullName || driver.name}</div>
                                                         <div className="text-sm text-gray-600">{driver.licenseNumber}</div>
                                                     </div>
                                                 </button>
@@ -605,7 +605,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                     <div className="flex items-center gap-3">
                                         <FileText size={20} className="text-gray-600" />
                                         <div>
-                                            <div className="font-medium">{currentRoute.name}</div>
+                                            <div className="font-medium text-gray-400">{currentRoute.name}</div>
                                             {currentRoute.description && (
                                                 <div className="text-sm text-gray-600 truncate">{currentRoute.description}</div>
                                             )}
@@ -627,7 +627,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                             >
                                                 <FileText size={20} />
                                                 <div>
-                                                    <div className="font-medium">None</div>
+                                                    <div className="font-medium text-gray-400">None</div>
                                                     <div className="text-sm">No route related</div>
                                                 </div>
                                             </button>
@@ -641,7 +641,7 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                                                 >
                                                     <FileText size={20} className="text-purple-600" />
                                                     <div>
-                                                        <div className="font-medium">{route.name}</div>
+                                                        <div className="font-medium text-gray-400">{route.name}</div>
                                                         <div className="text-sm text-gray-600 truncate">{route.description}</div>
                                                     </div>
                                                 </button>
