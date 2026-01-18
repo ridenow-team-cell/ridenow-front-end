@@ -1,86 +1,232 @@
 "use client"
-import React, { useState } from 'react';
-import { Calendar, ChevronDown, Search, Plus, MoreVertical, QrCode, Ticket, Users, UserPlus, Shield, Download, Eye, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, ChevronDown, Search, Plus, QrCode, Ticket, Download, Eye, Edit, Trash2, CheckCircle, XCircle, AlertCircle, Clock, User, Bus, Route as RouteIcon, TrendingUp, TrendingDown } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import FilterSection from '@/components/ui/FilterSection';
+import Pagination from '@/components/ui/Pagination';
+import CreateTicketModal from '@/components/ui/modals/CreateTicketModal';
+import TicketDetailsModal from '@/components/ui/modals/TicketDetailModal';
+import SuccessModal from '@/components/ui/modals/SuccessModal';
+import { ConfirmModal } from '@/components/ui/modals/ConfirmModal';
 import StatCard from '@/components/ui/StatCard';
-// import CreateTicketModal from '@/components/ui/modals/CreateTicketModal';
-
-interface TicketData {
-    id: number;
-    ticketId: string;
-    ticketOptions: string;
-    price: string;
-    qrCode: string;
-}
+import {
+    useTickets,
+    useCreateTicket,
+    useUpdateTicket,
+    useDeleteTicket,
+    useCancelTicket,
+    useCheckInTicket,
+    useCompleteTicket,
+    useGenerateQRCode,
+    useTicketStatistics
+} from '@/hooks/use-tickets';
+import { ticketService } from '@/services/ticket-service';
+import { TicketQueryParams } from '@/types/ticket';
+import { toast } from 'react-hot-toast';
 
 const TicketsPage = () => {
-    const [tickets, setTickets] = useState<TicketData[]>([
-        { id: 1, ticketId: '07845678', ticketOptions: 'Daily', price: '500', qrCode: '+869587......' },
-        { id: 2, ticketId: '07845679', ticketOptions: 'Weekly', price: '3,000', qrCode: '+869587......' },
-        { id: 3, ticketId: '07845680', ticketOptions: 'Monthly', price: '10,000', qrCode: '+869587......' },
-        { id: 4, ticketId: '07845681', ticketOptions: 'Daily', price: '500', qrCode: '+869587......' },
-        { id: 5, ticketId: '07845682', ticketOptions: 'Daily', price: '500', qrCode: '+869587......' },
-        { id: 6, ticketId: '07845683', ticketOptions: 'Student', price: '300', qrCode: '+869587......' },
-        { id: 7, ticketId: '07845684', ticketOptions: 'Premium', price: '800', qrCode: '+869587......' },
-    ]);
+    const [filters, setFilters] = useState<TicketQueryParams>({
+        page: 1,
+        pageSize: 10,
+        sortBy: 'bookingDate',
+        sortOrder: 'desc'
+    });
 
+    // Modal states
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+    const [selectedAction, setSelectedAction] = useState<'delete' | 'cancel' | 'checkin' | 'complete' | 'refund'>('delete');
 
+    // Hooks
+    const { data: ticketsData, isLoading, refetch } = useTickets(filters);
+    const { data: statistics } = useTicketStatistics();
+    const createTicket = useCreateTicket();
+    const updateTicket = useUpdateTicket();
+    const deleteTicket = useDeleteTicket();
+    const cancelTicket = useCancelTicket();
+    const checkInTicket = useCheckInTicket();
+    const completeTicket = useCompleteTicket();
+    const generateQRCode = useGenerateQRCode();
+
+    // Update date filters for statistics
+    useEffect(() => {
+        const today = new Date().toISOString().split('T')[0];
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+
+        // You could update statistics filters here
+    }, []);
+
+    // Table columns
     const columns = [
-        { key: 'ticketId', header: 'Ticket ID' },
-        { key: 'ticketOptions', header: 'Ticket Options' },
-        { key: 'price', header: 'Price' },
         {
-            key: 'qrCode',
+            key: 'ticketNumber',
+            header: 'Ticket ID',
+            render: (ticket: any) => (
+                <div className="font-mono text-sm text-gray-800">{ticket.ticketNumber}</div>
+            )
+        },
+        {
+            key: 'seatNumber',
+            header: 'Seat',
+            render: (ticket: any) => (
+                <div className="font-medium text-gray-800">{ticket.seatNumber}</div>
+            )
+        },
+        {
+            key: 'price',
+            header: 'Price',
+            render: (ticket: any) => ticketService.formatPrice(ticket.price)
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            render: (ticket: any) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticketService.getStatusColor(ticket.status)}`}>
+                    {ticket.status}
+                </span>
+            )
+        },
+        {
+            key: 'paymentStatus',
+            header: 'Payment',
+            render: (ticket: any) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticketService.getPaymentStatusColor(ticket.paymentStatus)}`}>
+                    {ticket.paymentStatus}
+                </span>
+            )
+        },
+        {
+            key: 'bookingDate',
+            header: 'Booking Date',
+            render: (ticket: any) => ticketService.formatDate(ticket.bookingDate)
+        },
+        {
+            key: 'qrCodeUrl',
             header: 'QR Code',
-            className: 'flex items-center gap-2'
+            render: (ticket: any) => (
+                <div className="flex items-center gap-2">
+                    {ticket.qrCodeUrl ? (
+                        <>
+                            <QrCode size={16} className="text-green-600" />
+                            <span className="text-xs text-gray-500">Available</span>
+                        </>
+                    ) : (
+                        <>
+                            <QrCode size={16} className="text-gray-400" />
+                            <span className="text-xs text-gray-400">Not generated</span>
+                        </>
+                    )}
+                </div>
+            )
         },
     ];
 
-    const formatData = (ticket: TicketData) => ({
-        ...ticket,
-        price: `₦${ticket.price}`,
-        qrCode: (
-            <div className="flex items-center gap-2">
-                <QrCode size={16} className="text-gray-500" />
-                <span>{ticket.qrCode}</span>
-            </div>
-        ),
-    });
-
-    const formattedData = tickets.map(formatData);
-
+    // Actions for tickets
     const actions = [
         {
             label: 'View Details',
-            onClick: (ticket: TicketData) => console.log('View ticket:', ticket),
+            onClick: (ticket: any) => {
+                setSelectedTicketId(ticket.id);
+                setShowDetailsModal(true);
+            },
             icon: <Eye size={14} />
         },
         {
-            label: 'Edit Ticket',
-            onClick: (ticket: TicketData) => console.log('Edit ticket:', ticket),
-            icon: <Edit size={14} />
+            label: 'Check In',
+            onClick: (ticket: any) => {
+                setSelectedTicketId(ticket.id);
+                setSelectedAction('checkin');
+                setShowConfirmModal(true);
+            },
+            icon: <CheckCircle size={14} />,
+            condition: (ticket: any) => ticket.status === 'Booked'
+        },
+        {
+            label: 'Mark Complete',
+            onClick: (ticket: any) => {
+                setSelectedTicketId(ticket.id);
+                setSelectedAction('complete');
+                setShowConfirmModal(true);
+            },
+            icon: <CheckCircle size={14} />,
+            condition: (ticket: any) => ticket.status === 'CheckedIn'
+        },
+        {
+            label: 'Generate QR',
+            onClick: (ticket: any) => {
+                generateQRCode.mutate(ticket.id, {
+                    onSuccess: () => {
+                        toast.success('QR code generated successfully');
+                        refetch();
+                    }
+                });
+            },
+            icon: <QrCode size={14} />,
+            condition: (ticket: any) => !ticket.qrCodeUrl
         },
         {
             label: 'Download QR',
-            onClick: (ticket: TicketData) => console.log('Download QR:', ticket),
-            icon: <Download size={14} />
+            onClick: (ticket: any) => {
+                if (ticket.qrCodeUrl) {
+                    window.open(ticket.qrCodeUrl, '_blank');
+                }
+            },
+            icon: <Download size={14} />,
+            condition: (ticket: any) => !!ticket.qrCodeUrl
+        },
+        {
+            label: 'Cancel Ticket',
+            onClick: (ticket: any) => {
+                setSelectedTicketId(ticket.id);
+                setSelectedAction('cancel');
+                setShowConfirmModal(true);
+            },
+            icon: <XCircle size={14} />,
+            className: 'text-red-500',
+            condition: (ticket: any) => ticket.status === 'Booked' || ticket.status === 'CheckedIn'
+        },
+        {
+            label: 'Refund',
+            onClick: (ticket: any) => {
+                setSelectedTicketId(ticket.id);
+                setSelectedAction('refund');
+                setShowConfirmModal(true);
+            },
+            icon: <AlertCircle size={14} />,
+            className: 'text-orange-500',
+            condition: (ticket: any) => ticket.paymentStatus === 'Paid' && ticket.status !== 'Refunded'
         },
         {
             label: 'Delete',
-            onClick: (ticket: TicketData) => {
-                setTickets(tickets.filter(t => t.id !== ticket.id));
+            onClick: (ticket: any) => {
+                setSelectedTicketId(ticket.id);
+                setSelectedAction('delete');
+                setShowConfirmModal(true);
             },
             icon: <Trash2 size={14} />,
-            className: 'text-red-500'
+            className: 'text-red-500',
+            condition: (ticket: any) => ticket.status === 'Cancelled' || ticket.status === 'Completed'
         }
     ];
+
+    // Filter actions based on ticket conditions
+    const getFilteredActions = (ticket: any) => {
+        return actions.filter(action =>
+            !action.condition || action.condition(ticket)
+        );
+    };
+
+
 
     const ticketStats = [
         {
             label: 'Total Tickets Sold',
-            value: '345',
+            value: statistics?.totalTickets?.toString() || '0',
             bgColor: '#343434', // Using hex color
             icon: '/assets/icons/ticket.png', // Image path
             trend: 'up',
@@ -89,8 +235,8 @@ const TicketsPage = () => {
             trendColor: 'text-green-500'
         },
         {
-            label: 'Sold Out Trips',
-            value: '450',
+            label: 'Active Tickets',
+            value: `${statistics?.bookedTickets || 0} / ${statistics?.checkedInTickets || 0}`,
             bgColor: '#343434',
             icon: '/assets/icons/revenue.png',
             trend: 'up',
@@ -99,8 +245,9 @@ const TicketsPage = () => {
             trendColor: 'text-orange-500'
         },
         {
-            label: 'Available Seats',
-            value: '77',
+            label: 'Completion Rate',
+            value: statistics?.totalTickets ?
+                `${((statistics.completedTickets / statistics.totalTickets) * 100).toFixed(1)}%` : '0%',
             bgColor: '#343434',
             icon: '/assets/icons/seat.png',
             trend: 'info',
@@ -110,121 +257,236 @@ const TicketsPage = () => {
         }
     ];
 
+    // Handlers
+    const handleCreateTicket = (formData: any) => {
+        createTicket.mutate(formData, {
+            onSuccess: () => {
+                setShowCreateModal(false);
+                setShowSuccessModal(true);
+                refetch();
+            }
+        });
+    };
+
+    const handleSearch = (searchTerm: string) => {
+        setFilters(prev => ({ ...prev, search: searchTerm, page: 1 }));
+    };
+
+    const handleFilter = () => {
+        // Advanced filtering logic can be added here
+        console.log('Filter clicked', filters);
+    };
+
+    const handlePageChange = (page: number) => {
+        setFilters(prev => ({ ...prev, page }));
+    };
+
+    const handleConfirmAction = () => {
+        if (!selectedTicketId) return;
+
+        switch (selectedAction) {
+            case 'delete':
+                deleteTicket.mutate(selectedTicketId, {
+                    onSuccess: () => {
+                        setShowConfirmModal(false);
+                        setSelectedTicketId(null);
+                        toast.success('Ticket deleted successfully');
+                    }
+                });
+                break;
+            case 'cancel':
+                cancelTicket.mutate(selectedTicketId, {
+                    onSuccess: () => {
+                        setShowConfirmModal(false);
+                        setSelectedTicketId(null);
+                        toast.success('Ticket cancelled successfully');
+                        refetch();
+                    }
+                });
+                break;
+            case 'checkin':
+                checkInTicket.mutate(selectedTicketId, {
+                    onSuccess: () => {
+                        setShowConfirmModal(false);
+                        setSelectedTicketId(null);
+                        toast.success('Ticket checked in successfully');
+                        refetch();
+                    }
+                });
+                break;
+            case 'complete':
+                completeTicket.mutate(selectedTicketId, {
+                    onSuccess: () => {
+                        setShowConfirmModal(false);
+                        setSelectedTicketId(null);
+                        toast.success('Ticket marked as completed');
+                        refetch();
+                    }
+                });
+                break;
+            case 'refund':
+                // Note: Refund endpoint needs to be added to the service
+                toast.error('Refund functionality coming soon');
+                setShowConfirmModal(false);
+                setSelectedTicketId(null);
+                break;
+        }
+    };
+
+    const getConfirmModalConfig = () => {
+        switch (selectedAction) {
+            case 'delete':
+                return {
+                    title: 'Delete Ticket',
+                    message: 'Are you sure you want to delete this ticket? This action cannot be undone.',
+                    confirmText: 'Delete',
+                    confirmColor: 'bg-red-600 hover:bg-red-700'
+                };
+            case 'cancel':
+                return {
+                    title: 'Cancel Ticket',
+                    message: 'Are you sure you want to cancel this ticket? The seat will be released for others.',
+                    confirmText: 'Cancel Ticket',
+                    confirmColor: 'bg-orange-600 hover:bg-orange-700'
+                };
+            case 'checkin':
+                return {
+                    title: 'Check In Ticket',
+                    message: 'Mark this ticket as checked in? This will update the ticket status.',
+                    confirmText: 'Check In',
+                    confirmColor: 'bg-green-600 hover:bg-green-700'
+                };
+            case 'complete':
+                return {
+                    title: 'Complete Ticket',
+                    message: 'Mark this ticket journey as completed?',
+                    confirmText: 'Mark Complete',
+                    confirmColor: 'bg-blue-600 hover:bg-blue-700'
+                };
+            case 'refund':
+                return {
+                    title: 'Refund Ticket',
+                    message: 'Are you sure you want to refund this ticket? Payment status will be updated.',
+                    confirmText: 'Refund',
+                    confirmColor: 'bg-purple-600 hover:bg-purple-700'
+                };
+            default:
+                return {
+                    title: 'Confirm Action',
+                    message: 'Are you sure you want to perform this action?',
+                    confirmText: 'Confirm',
+                    confirmColor: 'bg-[#0066CC] hover:bg-[#0055AA]'
+                };
+        }
+    };
+
     return (
         <div className="p-4 sm:p-6">
-
             {/* Stats Cards */}
-            <div className="grid bg-white rounded-md p-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 {ticketStats.map((stat, index) => (
                     <StatCard key={index} {...stat} />
                 ))}
             </div>
-            {/* <div className="bg-white rounded-lg mb-6">
-                <div className="flex justify-between w-full flex-wrap border-b">
-                    <button
-
-                        className={`px-8 py-4 text-base font-bold text-[#1E1E1E] font-medium relative`}
-                    >
-                        Create Ticket
-
-                    </button>
-                    <button
-
-                        className={`px-8 py-4 text-base text-[#1E1E1E] relative`}
-                    >
-                        Invite New User
-
-                    </button>
-                    <button
-
-                        className={`px-8 py-4 text-base text-[#1E1E1E] relative`}
-                    >
-                        Manage User
-
-                    </button>
-                    <button
-
-                        className={`px-8 py-4 text-base text-[#1E1E1E] relative`}
-                    >
-                        Role Permission Mapping
-
-                    </button>
-                </div>
-            </div> */}
 
             {/* Filter Section */}
-            <div className="bg-white rounded-lg p-4 sm:p-6 mb-6">
-                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1 w-full lg:w-auto">
-                        <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-4 py-2">
-                            <Calendar size={20} className="text-gray-400" />
-                            <span className="text-sm text-gray-700">Dec 29,2025</span>
-                            <span className="text-gray-400">-</span>
-                            <span className="text-sm text-gray-700">Dec 30,2025</span>
-                        </div>
+            <FilterSection
+                onAdd={() => setShowCreateModal(true)}
+                onSearch={handleSearch}
+                onFilter={handleFilter}
+            // showAddButton={true}
+            // addButtonText="Create Ticket"
+            />
 
-                        <button className="flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors">
-                            <span className="text-sm text-gray-700">Filter</span>
-                            <ChevronDown size={20} className="text-gray-400" />
-                        </button>
+            {/* Loading State */}
+            {isLoading ? (
+                <div className="bg-white rounded-lg p-8 text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066CC] mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading tickets...</p>
+                </div>
+            ) : (
+                <>
+                    {/* Tickets Table */}
+                    <DataTable
+                        columns={columns}
+                        data={ticketsData.items || []}
+                        actions={actions}
+                        getFilteredActions={getFilteredActions}
+                    />
 
-                        <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-4 py-2 flex-1 w-full sm:w-auto">
-                            <Search size={20} className="text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search"
-                                className="border-none outline-none text-sm flex-1 bg-transparent placeholder-gray-400 text-gray-700"
+                    {/* Pagination */}
+                    {ticketsData && ticketsData.items.length > 0 && (
+                        <div className="mt-6">
+                            <Pagination
+                                currentPage={ticketsData.page}
+                                totalPages={Math.ceil(ticketsData.total / ticketsData.pageSize)}
+                                totalItems={ticketsData.total}
+                                itemsPerPage={ticketsData.pageSize}
+                                onPageChange={handlePageChange}
                             />
                         </div>
-                    </div>
+                    )}
 
-                    <div className="flex gap-3 w-full lg:w-auto">
-                        <button className="flex items-center justify-center gap-2 bg-[#E7A533] text-gray-800 px-6 py-2 rounded-lg hover:bg-[#d69420] transition-colors flex-1 lg:flex-initial">
-                            <span className="text-base font-medium">Search</span>
-                        </button>
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="flex items-center justify-center gap-2 bg-[#0066CC] text-white px-6 py-2 rounded-lg hover:bg-[#0052a3] transition-colors flex-1 lg:flex-initial"
-                        >
-                            <Plus size={20} />
-                            <span className="text-base font-medium">Create Ticket</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+                    {/* No Data Message */}
+                    {(!ticketsData || ticketsData.items.length === 0) && (
+                        <div className="bg-white rounded-lg p-8 text-center">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Ticket size={32} className="text-gray-400" />
+                            </div>
+                            <p className="text-gray-600 mb-2">No available booking tickets</p>
+                            {/* <p className="text-gray-500 text-sm mb-4">Create your first ticket to get started</p> */}
+                            {/* <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="px-6 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors"
+                            >
+                                Create Ticket
+                            </button> */}
+                        </div>
+                    )}
+                </>
+            )}
 
-            {/* Tickets Table */}
-            <div className="bg-white rounded-lg overflow-hidden">
-                <div className="p-4 sm:p-6">
-                    <div className="overflow-x-auto">
-                        <DataTable
-                            columns={columns}
-                            data={formattedData}
-                            actions={actions}
-                        />
-                    </div>
+            {/* Modals */}
+            <CreateTicketModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSubmit={handleCreateTicket}
+            />
 
-                    <div className="flex justify-center items-center gap-2 mt-6">
-                        <button className="w-10 h-10 flex items-center justify-center bg-[#E7A533] text-white rounded-lg hover:bg-[#d69420] transition-colors">
-                            ‹
-                        </button>
-                        <button className="w-10 h-10 flex items-center justify-center bg-[#E7A533] text-gray-800 rounded-lg">
-                            1
-                        </button>
-                        <button className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                            2
-                        </button>
-                        <button className="w-10 h-10 flex items-center justify-center bg-[#E7A533] text-white rounded-lg hover:bg-[#d69420] transition-colors">
-                            ›
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <TicketDetailsModal
+                isOpen={showDetailsModal}
+                onClose={() => {
+                    setShowDetailsModal(false);
+                    setSelectedTicketId(null);
+                }}
+                ticketId={selectedTicketId || ''}
+            />
 
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                title="Ticket Created Successfully"
+                message="The ticket has been created and the seat has been booked."
+                type="ticket"
+            />
 
-
+            <ConfirmModal
+                isOpen={showConfirmModal}
+                onClose={() => {
+                    setShowConfirmModal(false);
+                    setSelectedTicketId(null);
+                }}
+                onConfirm={handleConfirmAction}
+                title={getConfirmModalConfig().title}
+                message={getConfirmModalConfig().message}
+                confirmText={getConfirmModalConfig().confirmText}
+                cancelText="Cancel"
+                confirmButtonClassName={getConfirmModalConfig().confirmColor}
+            />
         </div>
     );
 };
 
 export default TicketsPage;
+
+

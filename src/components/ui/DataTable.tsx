@@ -1,11 +1,11 @@
 "use client"
 import React, { useState } from 'react';
-import { MoreVertical, Trash2 } from 'lucide-react';
 
 interface Column {
     key: string;
-    header: string;
+    header: React.ReactNode;
     className?: string;
+    render?: (item: any) => React.ReactNode;
 }
 
 interface Action {
@@ -37,7 +37,6 @@ const DataTable: React.FC<DataTableProps> = ({
     onSelectAll
 }) => {
     const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
-
     const allSelected = data.length > 0 && selectedItems.length === data.length;
 
     return (
@@ -64,7 +63,9 @@ const DataTable: React.FC<DataTableProps> = ({
                             </th>
                         ))}
                         {actions && actions.length > 0 && (
-                            <th className="text-left py-3 px-4 text-[#010237] font-semibold text-sm sm:text-base">Action</th>
+                            <th className="text-left py-3 px-4 text-[#010237] font-semibold text-sm sm:text-base">
+                                Actions
+                            </th>
                         )}
                     </tr>
                 </thead>
@@ -79,7 +80,7 @@ const DataTable: React.FC<DataTableProps> = ({
                                 <td className="py-4 px-4">
                                     <input
                                         type="checkbox"
-                                        checked={selectedItems.some(selected => selected.id === item.id)}
+                                        checked={selectedItems.includes(item.id)}
                                         onChange={() => onSelectItem?.(item)}
                                         className="rounded border-gray-300"
                                         onClick={(e) => e.stopPropagation()}
@@ -91,7 +92,7 @@ const DataTable: React.FC<DataTableProps> = ({
                                     key={column.key}
                                     className={`py-4 px-4 text-gray-700 text-sm ${column.className || ''}`}
                                 >
-                                    {item[column.key]}
+                                    {column.render ? column.render(item) : item[column.key]}
                                 </td>
                             ))}
                             {actions && actions.length > 0 && (
@@ -114,7 +115,7 @@ const DataTable: React.FC<DataTableProps> = ({
                                                     setDropdownOpen(null);
                                                 }}
                                             />
-                                            <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                                            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
                                                 {actions.map((action, actionIndex) => (
                                                     <button
                                                         key={actionIndex}
@@ -123,7 +124,8 @@ const DataTable: React.FC<DataTableProps> = ({
                                                             action.onClick(item);
                                                             setDropdownOpen(null);
                                                         }}
-                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${'text-[#010237]'}`}
+                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${action.className || 'text-[#010237]'
+                                                            }`}
                                                     >
                                                         {action.icon}
                                                         {action.label}
@@ -138,6 +140,12 @@ const DataTable: React.FC<DataTableProps> = ({
                     ))}
                 </tbody>
             </table>
+
+            {data.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+
+                </div>
+            )}
         </div>
     );
 };

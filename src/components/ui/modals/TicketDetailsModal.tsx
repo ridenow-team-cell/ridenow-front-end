@@ -38,11 +38,11 @@ const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({ isOpen, onClose
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <label className="text-sm text-gray-600">Ticket ID</label>
-                        <p className="font-medium">{ticket.ticketId}</p>
+                        <p className="font-medium text-gray-400">{ticket.ticketId}</p>
                     </div>
                     <div className="space-y-1">
                         <label className="text-sm text-gray-600">Staff/Student ID</label>
-                        <p className="font-medium">{ticket.staffStudentId}</p>
+                        <p className="font-medium text-gray-400">{ticket.staffStudentId}</p>
                     </div>
                     <div className="space-y-1">
                         <label className="text-sm text-gray-600">Date Submitted</label>
@@ -53,7 +53,7 @@ const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({ isOpen, onClose
                     </div>
                     <div className="space-y-1">
                         <label className="text-sm text-gray-600">Issue Type</label>
-                        <p className="font-medium">{ticket.issueType}</p>
+                        <p className="font-medium text-gray-400">{ticket.issueType}</p>
                     </div>
                 </div>
 

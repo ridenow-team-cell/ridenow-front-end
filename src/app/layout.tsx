@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roboto, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./context/ThemeContext";
+import Providers from "./provider";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -65,9 +66,11 @@ export default function RootLayout({
       <body
         className={`${roboto.variable} ${inter.variable} font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300`}
       >
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <Providers >
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

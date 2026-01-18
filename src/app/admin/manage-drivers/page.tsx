@@ -1,147 +1,378 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/ui/DataTable';
 import FilterSection from '@/components/ui/FilterSection';
+import Pagination from '@/components/ui/Pagination';
 import DriverFormModal from '@/components/ui/modals/DriverFormModal';
 import SuccessModal from '@/components/ui/modals/SuccessModal';
 import { ConfirmModal } from '@/components/ui/modals/ConfirmModal';
-
-interface Driver {
-    id: number;
-    name: string;
-    model: string;
-    make: string;
-    regName: string;
-    colour: string;
-    year: string;
-    status: 'active' | 'blocked';
-}
+import DriverDetailsModal from '@/components/ui/modals/DriverDetailsModal';
+import AssignBusModal from '@/components/ui/modals/AssignBusModal';
+import AssignRouteModal from '@/components/ui/modals/AssignRouteModal';
+import ChangeStatusModal from '@/components/ui/modals/ChangeDriverStatusModal';
+import {
+    useDrivers,
+    useCreateDriver,
+    useUpdateDriver,
+    useDeleteDriver,
+    useToggleDriverStatus,
+    useAssignBusToDriver,
+    useUnassignBusFromDriver,
+    useChangeDriverStatus
+} from '@/hooks/use-drivers';
+import { driverService } from '@/services/driver-service';
+import { Driver, DriverQueryParams } from '@/types/driver';
+import { toast } from 'react-hot-toast';
+import { useBuses } from '@/hooks/use-bus';
+import { useRoutes } from '@/hooks/use-routes';
 
 const ManageDriverPage = () => {
-    const [activeTab, setActiveTab] = useState<'add' | 'block'>('add');
-    const [Driveres, setDriveres] = useState<Driver[]>([
-        { id: 1, name: 'dora_2023', model: 'Dora Davis', make: 'admin@ridenow.com', regName: '+869587...........', colour: 'Super Admin', year: '18/12/2023', status: 'active' },
-        { id: 2, name: 'dora_2023', model: 'Dora Davis', make: 'admin@ridenow.com', regName: '+869587...........', colour: 'Admin', year: '18/12/2023', status: 'active' },
-        { id: 3, name: 'dora_2023', model: 'Dora Davis', make: 'admin@ridenow.com', regName: '+869587...........', colour: 'Editor', year: '18/12/2023', status: 'blocked' },
-        { id: 4, name: 'dora_2023', model: 'Dora Davis', make: 'admin@ridenow.com', regName: '+869587...........', colour: 'Super Admin', year: '18/12/2023', status: 'active' },
-        { id: 5, name: 'dora_2023', model: 'Dora Davis', make: 'admin@ridenow.com', regName: '+869587...........', colour: 'Super Admin', year: '18/12/2023', status: 'blocked' },
-    ]);
+    const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
+    const [filters, setFilters] = useState<DriverQueryParams>({
+        page: 1,
+        pageSize: 10,
+
+
+    });
 
     // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [showUnblockSuccessModal, setShowUnblockSuccessModal] = useState(false);
-    const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
-    const [DriverToBlock, setDriverToBlock] = useState<number | null>(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [showAssignBusModal, setShowAssignBusModal] = useState(false);
+    const [showAssignRouteModal, setShowAssignRouteModal] = useState(false);
+    const [showChangeStatusModal, setShowChangeStatusModal] = useState(false);
+
+    const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+    const [selectedAction, setSelectedAction] = useState<'deactivate' | 'delete' | 'assignBus' | 'assignRoute' | 'changeStatus'>('deactivate');
+
+    // Hooks
+    const { data: driversData, isLoading, refetch } = useDrivers(filters);
+    const { data: busesData } = useBuses({ status: 'Available' });
+    const { data: routesData } = useRoutes({ status: 'Active' });
+
+    const createDriver = useCreateDriver();
+    const updateDriver = useUpdateDriver();
+    const deleteDriver = useDeleteDriver();
+    const toggleDriverStatus = useToggleDriverStatus();
+    const assignBusToDriver = useAssignBusToDriver();
+    const unassignBusFromDriver = useUnassignBusFromDriver();
+    const changeDriverStatus = useChangeDriverStatus();
+
+    // Update filters when tab changes
+    useEffect(() => {
+        setFilters(prev => ({
+            ...prev,
+            status: activeTab === 'active' ? 'Active' : 'Inactive',
+            isActive: activeTab === 'active',
+            page: 1
+        }));
+    }, [activeTab]);
 
     // Table columns
     const columns = [
-        { key: 'name', header: 'Image' },
-        { key: 'model', header: 'School Id' },
-        { key: 'regName', header: 'Phone Number' },
-        { key: 'regName', header: 'Allocated Route' },
-        { key: 'regName', header: 'Assigned Route' },
-
+        {
+            key: 'photoUrl',
+            header: 'Image',
+            render: (driver: Driver) => (
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                    {driver.photoUrl ? (
+                        <img src={driver.photoUrl} alt={driver.fullName} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                            <span className="text-gray-600 font-medium">
+                                {driver.fullName?.charAt(0).toUpperCase()}
+                            </span>
+                        </div>
+                    )}
+                </div>
+            )
+        },
+        {
+            key: 'fullName',
+            header: 'Full Name',
+            render: (driver: Driver) => (
+                <div>
+                    <div className="font-medium text-gray-800">{driver.fullName}</div>
+                    <div className="text-sm text-gray-500">{driver.email}</div>
+                </div>
+            )
+        },
+        {
+            key: 'phoneNumber',
+            header: 'Phone Number',
+            render: (driver: Driver) => (
+                <div className="text-gray-700">{driver.phoneNumber}</div>
+            )
+        },
+        {
+            key: 'licenseNumber',
+            header: 'License Number',
+            render: (driver: Driver) => (
+                <div className="text-gray-700">{driver.licenseNumber}</div>
+            )
+        },
+        {
+            key: 'busId',
+            header: 'Allocated Bus',
+            render: (driver: Driver) => (
+                <div className="text-gray-700">
+                    {driver.busId ? 'Assigned' : 'Not Assigned'}
+                </div>
+            )
+        },
+        {
+            key: 'routeId',
+            header: 'Assigned Route',
+            render: (driver: Driver) => (
+                <div className="text-gray-700">
+                    {driver.routeId ? 'Assigned' : 'Not Assigned'}
+                </div>
+            )
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            render: (driver: Driver) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${driverService.getStatusColor(driver.status)}`}>
+                    {driverService.getStatusBadge(driver.status)}
+                </span>
+            )
+        },
+        {
+            key: 'createdAt',
+            header: 'Joined Date',
+            render: (driver: Driver) => driverService.formatDate(driver.createdAt)
+        },
     ];
 
-    // Actions for Add Driver tab
-    const addTabActions = [
+    // Actions for Active Drivers tab
+    const activeTabActions = [
+        {
+            label: 'View Details',
+            onClick: (driver: Driver) => {
+                setSelectedDriver(driver);
+                setShowDetailsModal(true);
+            }
+        },
         {
             label: 'Edit',
-            onClick: (Driver: Driver) => {
-                setEditingDriver(Driver);
+            onClick: (driver: Driver) => {
+                setSelectedDriver(driver);
                 setShowEditModal(true);
             }
         },
         {
-            label: 'Block',
-            onClick: (Driver: Driver) => {
-                setDriverToBlock(Driver.id);
+            label: 'Assign Bus',
+            onClick: (driver: Driver) => {
+                setSelectedDriver(driver);
+                setSelectedAction('assignBus');
+                setShowAssignBusModal(true);
+            }
+        },
+        // {
+        //     label: 'Assign Route',
+        //     onClick: (driver: Driver) => {
+        //         setSelectedDriver(driver);
+        //         setSelectedAction('assignRoute');
+        //         setShowAssignRouteModal(true);
+        //     }
+        // },
+        {
+            label: 'Change Status',
+            onClick: (driver: Driver) => {
+                setSelectedDriver(driver);
+                setSelectedAction('changeStatus');
+                setShowChangeStatusModal(true);
+            }
+        },
+        {
+            label: 'Deactivate',
+            onClick: (driver: Driver) => {
+                setSelectedDriver(driver);
+                setSelectedAction('deactivate');
+                setShowConfirmModal(true);
+            },
+            className: 'text-red-500'
+        },
+        {
+            label: 'Delete',
+            onClick: (driver: Driver) => {
+                setSelectedDriver(driver);
+                setSelectedAction('delete');
                 setShowConfirmModal(true);
             },
             className: 'text-red-500'
         }
     ];
 
-    // Actions for Block Driver tab
-    const blockTabActions = [
+    // Actions for Inactive Drivers tab
+    const inactiveTabActions = [
         {
-            label: 'Unblock',
-            onClick: (Driver: Driver) => handleUnblock(Driver.id),
+            label: 'View Details',
+            onClick: (driver: Driver) => {
+                setSelectedDriver(driver);
+                setShowDetailsModal(true);
+            }
+        },
+        {
+            label: 'Activate',
+            onClick: (driver: Driver) => handleToggleStatus(driver.id, 'activate'),
             className: 'text-[#0066CC]'
         },
         {
             label: 'Delete',
-            onClick: (Driver: Driver) => {
-                setDriverToBlock(Driver.id);
+            onClick: (driver: Driver) => {
+                setSelectedDriver(driver);
+                setSelectedAction('delete');
                 setShowConfirmModal(true);
             },
             className: 'text-red-500'
         }
     ];
 
-    // Filter Driveres based on active tab
-    const filteredDriveres = activeTab === 'block'
-        ? Driveres.filter(Driver => Driver.status === 'blocked')
-        : Driveres;
-
     // Handlers
     const handleAddDriver = (formData: any) => {
-        const newDriver: Driver = {
-            id: Driveres.length + 1,
-            name: formData.name,
-            model: formData.model,
-            make: formData.make,
-            regName: formData.registrationName,
-            colour: formData.colour,
-            year: formData.year,
-            status: 'active'
-        };
-        setDriveres([...Driveres, newDriver]);
-        setShowAddModal(false);
-        setShowSuccessModal(true);
+        createDriver.mutate(formData, {
+            onSuccess: () => {
+                setShowAddModal(false);
+                setShowSuccessModal(true);
+                refetch();
+            }
+        });
     };
 
     const handleEditDriver = (formData: any) => {
-        if (!editingDriver) return;
+        if (!selectedDriver) return;
 
-        const updatedDriveres = Driveres.map(Driver =>
-            Driver.id === editingDriver.id
-                ? { ...Driver, ...formData, regName: formData.registrationName }
-                : Driver
+        const { password, confirmPassword, ...updateData } = formData;
+        updateDriver.mutate(
+            { id: selectedDriver.id, data: updateData },
+            {
+                onSuccess: () => {
+                    setShowEditModal(false);
+                    setSelectedDriver(null);
+                    setShowSuccessModal(true);
+                }
+            }
         );
-        setDriveres(updatedDriveres);
-        setShowEditModal(false);
-        setShowSuccessModal(true);
     };
 
-    const handleBlock = (DriverId: number) => {
-        setDriveres(Driveres.map(Driver =>
-            Driver.id === DriverId ? { ...Driver, status: 'blocked' } : Driver
-        ));
-        setShowConfirmModal(false);
-        setDriverToBlock(null);
+    const handleDeleteDriver = () => {
+        if (!selectedDriver) return;
+
+        deleteDriver.mutate(selectedDriver.id, {
+            onSuccess: () => {
+                setShowConfirmModal(false);
+                setSelectedDriver(null);
+                refetch();
+            }
+        });
     };
 
-    const handleUnblock = (DriverId: number) => {
-        setDriveres(Driveres.map(Driver =>
-            Driver.id === DriverId ? { ...Driver, status: 'active' } : Driver
-        ));
-        setShowUnblockSuccessModal(true);
+    const handleToggleStatus = (driverId: string, action: 'activate' | 'deactivate') => {
+        toggleDriverStatus.mutate(
+            { id: driverId, action },
+            {
+                onSuccess: () => {
+                    if (action === 'activate') {
+                        setShowSuccessModal(true);
+                    }
+                    refetch();
+                }
+            }
+        );
+    };
+
+    const handleAssignBus = (busId: string) => {
+        if (!selectedDriver) return;
+
+        if (busId === '') {
+            // Unassign bus
+            unassignBusFromDriver.mutate(selectedDriver.id, {
+                onSuccess: () => {
+                    setShowAssignBusModal(false);
+                    setSelectedDriver(null);
+                    toast.success('Bus unassigned successfully');
+                    refetch();
+                }
+            });
+        } else {
+            // Assign new bus
+            assignBusToDriver.mutate(
+                { id: selectedDriver.id, busId },
+                {
+                    onSuccess: () => {
+                        setShowAssignBusModal(false);
+                        setSelectedDriver(null);
+                        toast.success('Bus assigned successfully');
+                        refetch();
+                    }
+                }
+            );
+        }
+    };
+
+    const handleChangeStatus = (newStatus: string) => {
+        if (!selectedDriver) return;
+
+        changeDriverStatus.mutate(
+            { id: selectedDriver.id, status: newStatus },
+            {
+                onSuccess: () => {
+                    setShowChangeStatusModal(false);
+                    setSelectedDriver(null);
+                    toast.success('Driver status changed successfully');
+                    refetch();
+                }
+            }
+        );
     };
 
     const handleUnblockAll = () => {
-        setDriveres(Driveres.map(Driver =>
-            Driver.status === 'blocked' ? { ...Driver, status: 'active' } : Driver
-        ));
-        setShowUnblockSuccessModal(true);
+        // This would require a batch API endpoint
+        toast.error('Feature not implemented yet');
     };
 
-    const handleConfirmBlock = () => {
-        if (DriverToBlock) {
-            handleBlock(DriverToBlock);
+    const handleSearch = (searchTerm: string) => {
+        setFilters(prev => ({ ...prev, search: searchTerm, page: 1 }));
+    };
+
+    const handlePageChange = (page: number) => {
+        setFilters(prev => ({ ...prev, page }));
+    };
+
+    const getConfirmModalConfig = () => {
+        switch (selectedAction) {
+            case 'deactivate':
+                return {
+                    title: 'Deactivate Driver',
+                    message: 'Are you sure you want to deactivate this driver?',
+                    confirmText: 'Deactivate',
+                    onConfirm: () => {
+                        if (selectedDriver) {
+                            handleToggleStatus(selectedDriver.id, 'deactivate');
+                        }
+                        setShowConfirmModal(false);
+                        setSelectedDriver(null);
+                    }
+                };
+            case 'delete':
+                return {
+                    title: 'Delete Driver',
+                    message: 'Are you sure you want to delete this driver? This action cannot be undone.',
+                    confirmText: 'Delete',
+                    onConfirm: handleDeleteDriver
+                };
+            default:
+                return {
+                    title: 'Confirm Action',
+                    message: 'Are you sure you want to perform this action?',
+                    confirmText: 'Confirm',
+                    onConfirm: () => { }
+                };
         }
     };
 
@@ -151,20 +382,20 @@ const ManageDriverPage = () => {
             <div className="bg-white rounded-lg mb-6">
                 <div className="flex border-b">
                     <button
-                        onClick={() => setActiveTab('add')}
-                        className={`px-8 py-4 text-base font-medium relative ${activeTab === 'add' ? 'text-gray-800' : 'text-gray-500'}`}
+                        onClick={() => setActiveTab('active')}
+                        className={`px-8 py-4 text-base font-medium relative ${activeTab === 'active' ? 'text-gray-800' : 'text-gray-500'}`}
                     >
-                        Add Driver
-                        {activeTab === 'add' && (
+                        Active Drivers
+                        {activeTab === 'active' && (
                             <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#E7A533]"></div>
                         )}
                     </button>
                     <button
-                        onClick={() => setActiveTab('block')}
-                        className={`px-8 py-4 text-base font-medium relative ${activeTab === 'block' ? 'text-gray-800' : 'text-gray-500'}`}
+                        onClick={() => setActiveTab('inactive')}
+                        className={`px-8 py-4 text-base font-medium relative ${activeTab === 'inactive' ? 'text-gray-800' : 'text-gray-500'}`}
                     >
-                        Block Driver
-                        {activeTab === 'block' && (
+                        Inactive Drivers
+                        {activeTab === 'inactive' && (
                             <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#E7A533]"></div>
                         )}
                     </button>
@@ -174,34 +405,54 @@ const ManageDriverPage = () => {
             {/* Filter Section */}
             <FilterSection
                 onAdd={() => setShowAddModal(true)}
-                showAddButton={activeTab === 'add'}
-                showUnblockAll={activeTab === 'block'}
-                onUnblockAll={handleUnblockAll}
-                addButtonText={'Add Driver'}
+                onSearch={handleSearch}
+                showAddButton={true}
+                addButtonText="Add New Driver"
+
             />
 
-            {/* Data Table */}
-            <DataTable
-                columns={columns}
-                data={filteredDriveres}
-                actions={activeTab === 'add' ? addTabActions : blockTabActions}
-            />
+            {/* Loading State */}
+            {isLoading ? (
+                <div className="bg-white rounded-lg p-8 text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066CC] mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading drivers...</p>
+                </div>
+            ) : (
+                <>
+                    {/* Data Table */}
+                    <DataTable
+                        columns={columns}
+                        data={driversData || []}
+                        actions={activeTab === 'active' ? activeTabActions : inactiveTabActions}
+                    />
 
-            {/* Pagination */}
-            <div className="flex justify-center items-center gap-2 mt-6">
-                <button className="w-10 h-10 flex items-center justify-center bg-[#E7A533] text-white rounded-lg hover:bg-[#d69420] transition-colors">
-                    ‹
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center bg-[#E7A533] text-gray-800 rounded-lg">
-                    1
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    2
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center bg-[#E7A533] text-white rounded-lg hover:bg-[#d69420] transition-colors">
-                    ›
-                </button>
-            </div>
+                    {/* Pagination */}
+                    {/* {driversData && driversData.totalPages > 0 && (
+                        <div className="mt-6">
+                            <Pagination
+                                currentPage={driversData.page}
+                                totalPages={Math.ceil(driversData.total / driversData.pageSize)}
+                                totalItems={driversData.totalPages}
+                                itemsPerPage={driversData.pageSize}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
+                    )} */}
+
+                    {/* No Data Message */}
+                    {(!driversData || driversData.length === 0) && (
+                        <div className="bg-white rounded-lg p-8 text-center">
+                            <p className="text-gray-600">No drivers found</p>
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="mt-4 px-6 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors"
+                            >
+                                Add New Driver
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
 
             {/* Modals */}
             <DriverFormModal
@@ -209,42 +460,86 @@ const ManageDriverPage = () => {
                 onClose={() => setShowAddModal(false)}
                 onSubmit={handleAddDriver}
                 isEdit={false}
+                buses={busesData || []}
+                routes={routesData || []}
             />
 
             <DriverFormModal
                 isOpen={showEditModal}
                 onClose={() => {
                     setShowEditModal(false);
-                    setEditingDriver(null);
+                    setSelectedDriver(null);
                 }}
                 onSubmit={handleEditDriver}
-                initialData={editingDriver}
+                initialData={selectedDriver ? {
+                    fullName: selectedDriver.fullName,
+                    phoneNumber: selectedDriver.phoneNumber,
+                    email: selectedDriver.email,
+                    licenseNumber: selectedDriver.licenseNumber,
+                    photoUrl: selectedDriver.fullName,
+                    busId: selectedDriver.busId || '',
+                    routeId: selectedDriver.routeId || '',
+                    status: selectedDriver.status,
+                    isActive: selectedDriver.isActive
+                } : undefined}
                 isEdit={true}
+                buses={busesData || []}
+                routes={routesData || []}
+            />
+
+            <DriverDetailsModal
+                isOpen={showDetailsModal}
+                onClose={() => {
+                    setShowDetailsModal(false);
+                    setSelectedDriver(null);
+                }}
+                driverId={selectedDriver?.id || ''}
+            />
+
+            <AssignBusModal
+                isOpen={showAssignBusModal}
+                onClose={() => {
+                    setShowAssignBusModal(false);
+                    setSelectedDriver(null);
+                }}
+                onConfirm={handleAssignBus}
+                currentBusId={selectedDriver?.busId || ''}
+                buses={busesData || []}
+            />
+
+            <ChangeStatusModal
+                isOpen={showChangeStatusModal}
+                onClose={() => {
+                    setShowChangeStatusModal(false);
+                    setSelectedDriver(null);
+                }}
+                onConfirm={handleChangeStatus}
+                currentStatus={selectedDriver?.status || ''}
             />
 
             <SuccessModal
                 isOpen={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}
-                title={editingDriver ? 'Driver Updated Successfully' : 'Driver Added Successfully'}
-            />
-
-            <SuccessModal
-                isOpen={showUnblockSuccessModal}
-                onClose={() => setShowUnblockSuccessModal(false)}
-                title="Driver Unblocked Successfully"
+                title={
+                    selectedDriver
+                        ? 'Driver Updated Successfully'
+                        : selectedAction === 'deactivate'
+                            ? 'Driver Updated Successfully'
+                            : 'Driver Created Successfully'
+                }
             />
 
             <ConfirmModal
                 isOpen={showConfirmModal}
                 onClose={() => {
                     setShowConfirmModal(false);
-                    setDriverToBlock(null);
+                    setSelectedDriver(null);
                 }}
-                onConfirm={handleConfirmBlock}
-                title="Confirm Action"
-                message="Are you sure you want to block this Driver?"
-                confirmText="Yes"
-                cancelText="No"
+                onConfirm={getConfirmModalConfig().onConfirm}
+                title={getConfirmModalConfig().title}
+                message={getConfirmModalConfig().message}
+                confirmText={getConfirmModalConfig().confirmText}
+                cancelText="Cancel"
             />
         </div>
     );

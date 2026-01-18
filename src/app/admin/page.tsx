@@ -96,7 +96,7 @@ const DashboardPage: React.FC = () => {
                             <div className="relative">
                                 <button
                                     onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 text-gray-500"
                                 >
                                     {selectedFilter}
                                     <ChevronDown size={16} className="text-gray-400" />
@@ -117,7 +117,7 @@ const DashboardPage: React.FC = () => {
                                                         setShowFilterDropdown(false);
                                                         setChartData(generateChartData());
                                                     }}
-                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-gray-500"
                                                 >
                                                     {option}
                                                 </button>
@@ -304,7 +304,7 @@ const DashboardPage: React.FC = () => {
                         </thead>
                         <tbody>
                             {tripData.map((trip, index) => (
-                                <tr key={index} className="border hover:bg-gray-50">
+                                <tr key={index} className="border hover:bg-gray-50 text-gray-500">
                                     <td className="py-3 sm:py-4 px-2 sm:px-4 text-gray-700 text-sm whitespace-nowrap">{trip.trip}</td>
                                     <td className="py-3 sm:py-4 px-2 sm:px-4 text-gray-700 text-sm whitespace-nowrap">{trip.bus}</td>
                                     <td className="py-3 sm:py-4 px-2 sm:px-4 text-gray-700 text-sm whitespace-nowrap">{trip.route}</td>
