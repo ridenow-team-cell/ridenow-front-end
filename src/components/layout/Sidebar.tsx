@@ -121,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {/* Logo */}
                 <div
                     className="relative w-[160px] md:w-[180px] lg:w-[215px] h-[45px] md:h-[50px] lg:h-[60px] p-4 mb-12 cursor-pointer"
-                    onClick={() => handleMenuClick('Dashboard')}
+                    onClick={() => handleMenuClick('Analytics & Overview')}
                 >
                     <img
                         src="/assets/logo2.png"
