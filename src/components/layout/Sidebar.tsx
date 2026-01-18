@@ -33,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         'Revenue': '/admin/revenue',
         'Reports': '/admin/reports',
         'Support': '/admin/support',
-        'Manage Roles': '/admin/manage-roles',
+        // 'Manage Roles': '/admin/manage-roles',
         'Tickets': '/admin/tickets',
         'Reviews': '/admin/reviews',
     };
@@ -104,7 +104,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         { iconSrc: '/assets/icons/revenue.png', label: 'Revenue' },
         { iconSrc: '/assets/icons/chart.png', label: 'Reports' },
         { iconSrc: '/assets/icons/support.png', label: 'Support' },
-        { iconSrc: '/assets/icons/shield.png', label: 'Manage Roles' },
+        // { iconSrc: '/assets/icons/shield.png', label: 'Manage Roles' },
         { iconSrc: '/assets/icons/ticket.png', label: 'Tickets' },
         { iconSrc: '/assets/icons/review.png', label: 'Reviews' },
         { iconSrc: '/assets/icons/logout.png', label: 'Logout' },
