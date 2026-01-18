@@ -446,11 +446,7 @@ const ReportsPage = () => {
 
     return (
         <div className="p-4 sm:p-6">
-            {/* Page Header */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">Reports & Analytics</h1>
-                <p className="text-gray-600">View real-time system statistics and analytics</p>
-            </div>
+
 
             {/* Quick Stats Overview */}
             {!statsLoading && dashboardStats && (
