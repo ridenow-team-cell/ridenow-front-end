@@ -87,7 +87,7 @@ const ManageDriverPage = () => {
 
         // Filter by active/inactive status
         result = result.filter(driver =>
-            activeTab === 'active' ? driver.status !== "Inactive" : driver.status === "Inactive"
+            activeTab === 'active' ? driver.isActive === true : driver.isActive === false
         );
 
         // Apply search filter
