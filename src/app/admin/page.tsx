@@ -338,7 +338,7 @@ const ReportsPage = () => {
             <div className="bg-white rounded-lg p-4 sm:p-6 mb-8">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-6">System Reports</h2>
 
-                <FilterSection onSearch={handleSearch} />
+
 
                 {/* Report Cards */}
                 <div className="mt-6">
@@ -347,8 +347,8 @@ const ReportsPage = () => {
                             <div
                                 key={report.id}
                                 className={`border rounded-lg p-4 transition-all hover:shadow-md ${selectedReport === report.id
-                                        ? 'border-[#0066CC] bg-blue-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-[#0066CC] bg-blue-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 onClick={() => setSelectedReport(report.id)}
                             >
