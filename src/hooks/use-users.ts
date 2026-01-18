@@ -78,7 +78,7 @@ export const useDeleteUser = () => {
         mutationFn: (id: string) => userService.deleteUser(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-            toast.success('User deleted successfully');
+            toast.success('User updated successfully');
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || 'Failed to delete user');

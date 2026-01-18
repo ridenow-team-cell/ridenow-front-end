@@ -95,7 +95,7 @@ export const useDeleteDriver = () => {
         mutationFn: (id: string) => driverService.deleteDriver(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: driverKeys.lists() });
-            toast.success('Driver deleted successfully');
+            toast.success('Driver updated successfully');
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || 'Failed to delete driver');

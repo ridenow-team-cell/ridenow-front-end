@@ -459,7 +459,7 @@ const ManageUserPage = () => {
                     editingUser
                         ? 'User Updated Successfully'
                         : selectedAction === 'block'
-                            ? 'User Deactivated Successfully'
+                            ? 'User updated successfully'
                             : 'User Created Successfully'
                 }
             />

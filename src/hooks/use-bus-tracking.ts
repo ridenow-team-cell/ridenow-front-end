@@ -137,7 +137,7 @@ export const useDeleteTrackingRecord = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: busTrackingKeys.lists() });
             queryClient.invalidateQueries({ queryKey: busTrackingKeys.liveStatus() });
-            toast.success('Tracking record deleted successfully');
+            toast.success('Tracking record updated successfully');
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || 'Failed to delete tracking record');

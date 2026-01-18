@@ -290,7 +290,7 @@ const TicketsPage = () => {
                     onSuccess: () => {
                         setShowConfirmModal(false);
                         setSelectedTicketId(null);
-                        toast.success('Ticket deleted successfully');
+                        toast.success('Ticket updated successfully');
                     }
                 });
                 break;

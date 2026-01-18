@@ -448,7 +448,7 @@ const ManageBusPage = () => {
                     editingBus
                         ? 'Bus Updated Successfully'
                         : selectedAction === 'block'
-                            ? 'Bus Deactivated Successfully'
+                            ? 'Bus updated successfully'
                             : 'Bus Created Successfully'
                 }
             />

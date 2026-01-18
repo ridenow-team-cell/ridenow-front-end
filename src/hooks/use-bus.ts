@@ -96,7 +96,7 @@ export const useDeleteBus = () => {
         mutationFn: (id: string) => busService.deleteBus(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: busKeys.lists() });
-            toast.success('Bus deleted successfully');
+            toast.success('Bus updated successfully');
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || 'Failed to delete bus');

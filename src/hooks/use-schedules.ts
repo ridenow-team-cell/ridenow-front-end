@@ -78,7 +78,7 @@ export const useDeleteSchedule = () => {
         mutationFn: (id: string) => scheduleService.deleteSchedule(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: scheduleKeys.lists() });
-            toast.success('Schedule deleted successfully');
+            toast.success('Schedule updated successfully');
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || 'Failed to delete schedule');

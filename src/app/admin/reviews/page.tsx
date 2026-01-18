@@ -587,7 +587,7 @@ const ReviewsPage = () => {
                     selectedAction === 'approve' ? 'Review Approved Successfully' :
                         selectedAction === 'reject' ? 'Review Rejected Successfully' :
                             selectedAction === 'feature' ? 'Featured Status Updated' :
-                                'Review Deleted Successfully'
+                                'Review updated successfully'
                 }
                 type="review"
             />

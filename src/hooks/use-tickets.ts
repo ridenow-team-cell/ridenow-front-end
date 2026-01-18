@@ -91,7 +91,7 @@ export const useDeleteTicket = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
             queryClient.invalidateQueries({ queryKey: ticketKeys.statistics() });
-            toast.success('Ticket deleted successfully');
+            toast.success('Ticket updated successfully');
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || 'Failed to delete ticket');

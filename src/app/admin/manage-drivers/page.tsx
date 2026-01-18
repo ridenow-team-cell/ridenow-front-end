@@ -8,7 +8,6 @@ import SuccessModal from '@/components/ui/modals/SuccessModal';
 import { ConfirmModal } from '@/components/ui/modals/ConfirmModal';
 import DriverDetailsModal from '@/components/ui/modals/DriverDetailsModal';
 import AssignBusModal from '@/components/ui/modals/AssignBusModal';
-import AssignRouteModal from '@/components/ui/modals/AssignRouteModal';
 import ChangeStatusModal from '@/components/ui/modals/ChangeDriverStatusModal';
 import {
     useDrivers,
@@ -21,18 +20,17 @@ import {
     useChangeDriverStatus
 } from '@/hooks/use-drivers';
 import { driverService } from '@/services/driver-service';
-import { Driver, DriverQueryParams } from '@/types/driver';
+import { Driver } from '@/types/driver';
 import { toast } from 'react-hot-toast';
 import { useBuses } from '@/hooks/use-bus';
 import { useRoutes } from '@/hooks/use-routes';
 
 const ManageDriverPage = () => {
     const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
-    const [filters, setFilters] = useState<DriverQueryParams>({
+    const [filters, setFilters] = useState({
         page: 1,
         pageSize: 10,
-
-
+        search: ''
     });
 
     // Modal states
@@ -42,14 +40,21 @@ const ManageDriverPage = () => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showAssignBusModal, setShowAssignBusModal] = useState(false);
-    const [showAssignRouteModal, setShowAssignRouteModal] = useState(false);
     const [showChangeStatusModal, setShowChangeStatusModal] = useState(false);
 
     const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
     const [selectedAction, setSelectedAction] = useState<'deactivate' | 'delete' | 'assignBus' | 'assignRoute' | 'changeStatus'>('deactivate');
 
+    // Store all drivers locally for filtering
+    const [allDrivers, setAllDrivers] = useState<Driver[]>([]);
+    const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
+
     // Hooks
-    const { data: driversData, isLoading, refetch } = useDrivers(filters);
+    const { data: driversData, isLoading, refetch } = useDrivers({
+        page: 1,
+        pageSize: 100 // Fetch more data to handle local filtering
+    });
+
     const { data: busesData } = useBuses({ status: 'Available' });
     const { data: routesData } = useRoutes({ status: 'Active' });
 
@@ -61,15 +66,50 @@ const ManageDriverPage = () => {
     const unassignBusFromDriver = useUnassignBusFromDriver();
     const changeDriverStatus = useChangeDriverStatus();
 
-    // Update filters when tab changes
+    // Load all drivers and filter locally
     useEffect(() => {
-        setFilters(prev => ({
-            ...prev,
-            status: activeTab === 'active' ? 'Active' : 'Inactive',
-            isActive: activeTab === 'active',
-            page: 1
-        }));
-    }, [activeTab]);
+        if (driversData && Array.isArray(driversData)) {
+            setAllDrivers(driversData);
+        } else if (driversData && typeof driversData === 'object' && driversData.data) {
+            // If API returns paginated response with data property
+            setAllDrivers(driversData.data);
+        }
+    }, [driversData]);
+
+    // Apply local filtering based on activeTab and search
+    useEffect(() => {
+        if (allDrivers.length === 0) {
+            setFilteredDrivers([]);
+            return;
+        }
+
+        let result = [...allDrivers];
+
+        // Filter by active/inactive status
+        result = result.filter(driver =>
+            activeTab === 'active' ? driver.status !== "Inactive" : driver.status === "Inactive"
+        );
+
+        // Apply search filter
+        if (filters.search.trim()) {
+            const searchTerm = filters.search.toLowerCase();
+            result = result.filter(driver =>
+                driver.fullName?.toLowerCase().includes(searchTerm) ||
+                driver.email?.toLowerCase().includes(searchTerm) ||
+                driver.phoneNumber?.toLowerCase().includes(searchTerm) ||
+                driver.licenseNumber?.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        setFilteredDrivers(result);
+    }, [allDrivers, activeTab, filters.search]);
+
+    // Calculate paginated data
+    const getPaginatedDrivers = () => {
+        const startIndex = (filters.page - 1) * filters.pageSize;
+        const endIndex = startIndex + filters.pageSize;
+        return filteredDrivers.slice(startIndex, endIndex);
+    };
 
     // Table columns
     const columns = [
@@ -172,14 +212,6 @@ const ManageDriverPage = () => {
                 setShowAssignBusModal(true);
             }
         },
-        // {
-        //     label: 'Assign Route',
-        //     onClick: (driver: Driver) => {
-        //         setSelectedDriver(driver);
-        //         setSelectedAction('assignRoute');
-        //         setShowAssignRouteModal(true);
-        //     }
-        // },
         {
             label: 'Change Status',
             onClick: (driver: Driver) => {
@@ -240,6 +272,9 @@ const ManageDriverPage = () => {
                 setShowAddModal(false);
                 setShowSuccessModal(true);
                 refetch();
+            },
+            onError: (error: any) => {
+                toast.error(error.message || 'Failed to create driver');
             }
         });
     };
@@ -255,6 +290,10 @@ const ManageDriverPage = () => {
                     setShowEditModal(false);
                     setSelectedDriver(null);
                     setShowSuccessModal(true);
+                    refetch();
+                },
+                onError: (error: any) => {
+                    toast.error(error.message || 'Failed to update driver');
                 }
             }
         );
@@ -268,6 +307,9 @@ const ManageDriverPage = () => {
                 setShowConfirmModal(false);
                 setSelectedDriver(null);
                 refetch();
+            },
+            onError: (error: any) => {
+                toast.error(error.message || 'Failed to delete driver');
             }
         });
     };
@@ -277,10 +319,13 @@ const ManageDriverPage = () => {
             { id: driverId, action },
             {
                 onSuccess: () => {
-                    if (action === 'activate') {
-                        setShowSuccessModal(true);
-                    }
+                    setShowConfirmModal(false);
+                    setSelectedDriver(null);
+                    setShowSuccessModal(true);
                     refetch();
+                },
+                onError: (error: any) => {
+                    toast.error(error.message || 'Failed to toggle driver status');
                 }
             }
         );
@@ -297,6 +342,9 @@ const ManageDriverPage = () => {
                     setSelectedDriver(null);
                     toast.success('Bus unassigned successfully');
                     refetch();
+                },
+                onError: (error: any) => {
+                    toast.error(error.message || 'Failed to unassign bus');
                 }
             });
         } else {
@@ -309,6 +357,9 @@ const ManageDriverPage = () => {
                         setSelectedDriver(null);
                         toast.success('Bus assigned successfully');
                         refetch();
+                    },
+                    onError: (error: any) => {
+                        toast.error(error.message || 'Failed to assign bus');
                     }
                 }
             );
@@ -326,14 +377,12 @@ const ManageDriverPage = () => {
                     setSelectedDriver(null);
                     toast.success('Driver status changed successfully');
                     refetch();
+                },
+                onError: (error: any) => {
+                    toast.error(error.message || 'Failed to change driver status');
                 }
             }
         );
-    };
-
-    const handleUnblockAll = () => {
-        // This would require a batch API endpoint
-        toast.error('Feature not implemented yet');
     };
 
     const handleSearch = (searchTerm: string) => {
@@ -376,13 +425,18 @@ const ManageDriverPage = () => {
         }
     };
 
+    const totalPages = Math.ceil(filteredDrivers.length / filters.pageSize);
+
     return (
         <div className="p-4 sm:p-6">
             {/* Tabs */}
             <div className="bg-white rounded-lg mb-6">
                 <div className="flex border-b">
                     <button
-                        onClick={() => setActiveTab('active')}
+                        onClick={() => {
+                            setActiveTab('active');
+                            setFilters(prev => ({ ...prev, page: 1 }));
+                        }}
                         className={`px-8 py-4 text-base font-medium relative ${activeTab === 'active' ? 'text-gray-800' : 'text-gray-500'}`}
                     >
                         Active Drivers
@@ -391,7 +445,10 @@ const ManageDriverPage = () => {
                         )}
                     </button>
                     <button
-                        onClick={() => setActiveTab('inactive')}
+                        onClick={() => {
+                            setActiveTab('inactive');
+                            setFilters(prev => ({ ...prev, page: 1 }));
+                        }}
                         className={`px-8 py-4 text-base font-medium relative ${activeTab === 'inactive' ? 'text-gray-800' : 'text-gray-500'}`}
                     >
                         Inactive Drivers
@@ -408,7 +465,6 @@ const ManageDriverPage = () => {
                 onSearch={handleSearch}
                 showAddButton={true}
                 addButtonText="Add New Driver"
-
             />
 
             {/* Loading State */}
@@ -422,27 +478,32 @@ const ManageDriverPage = () => {
                     {/* Data Table */}
                     <DataTable
                         columns={columns}
-                        data={driversData || []}
+                        data={getPaginatedDrivers()}
                         actions={activeTab === 'active' ? activeTabActions : inactiveTabActions}
                     />
 
                     {/* Pagination */}
-                    {/* {driversData && driversData.totalPages > 0 && (
+                    {filteredDrivers.length > 0 && (
                         <div className="mt-6">
                             <Pagination
-                                currentPage={driversData.page}
-                                totalPages={Math.ceil(driversData.total / driversData.pageSize)}
-                                totalItems={driversData.totalPages}
-                                itemsPerPage={driversData.pageSize}
+                                currentPage={filters.page}
+                                totalPages={totalPages}
+                                totalItems={filteredDrivers.length}
+                                itemsPerPage={filters.pageSize}
                                 onPageChange={handlePageChange}
                             />
                         </div>
-                    )} */}
+                    )}
 
                     {/* No Data Message */}
-                    {(!driversData || driversData.length === 0) && (
+                    {filteredDrivers.length === 0 && (
                         <div className="bg-white rounded-lg p-8 text-center">
-                            <p className="text-gray-600">No drivers found</p>
+                            <p className="text-gray-600">
+                                {filters.search.trim()
+                                    ? `No ${activeTab === 'active' ? 'active' : 'inactive'} drivers found matching "${filters.search}"`
+                                    : `No ${activeTab === 'active' ? 'active' : 'inactive'} drivers found`
+                                }
+                            </p>
                             <button
                                 onClick={() => setShowAddModal(true)}
                                 className="mt-4 px-6 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors"

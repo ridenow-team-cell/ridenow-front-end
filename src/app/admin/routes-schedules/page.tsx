@@ -38,7 +38,7 @@ const RoutesSchedulesPage = () => {
         limit: 10,
         sortBy: 'name',
         sortOrder: 'asc',
-        status: 'Active'
+
     });
 
     // Schedule states
@@ -235,7 +235,7 @@ const RoutesSchedulesPage = () => {
     // Actions for Schedules tab
     const scheduleActions = [
         {
-            label: 'Edit',
+            label: 'View',
             onClick: handleEditSchedule
         },
         {
@@ -578,9 +578,9 @@ const RoutesSchedulesPage = () => {
                 onClose={() => setShowSuccessModal(false)}
                 title={
                     selectedAction === 'delete'
-                        ? `${activeTab === 'routes' ? 'Route' : 'Schedule'} Deleted Successfully`
+                        ? `${activeTab === 'routes' ? 'Route' : 'Schedule'} updated successfully`
                         : selectedAction === 'deactivate'
-                            ? selectedRoute?.isActive ? 'Route Deactivated Successfully' : 'Route Activated Successfully'
+                            ? selectedRoute?.isActive ? 'Route updated successfully' : 'Route updated successfully'
                             : editingRoute
                                 ? 'Route Updated Successfully'
                                 : 'Schedule Cancelled Successfully'

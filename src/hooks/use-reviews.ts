@@ -154,7 +154,7 @@ export const useDeleteReview = () => {
         mutationFn: (id: string) => reviewService.deleteReview(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: reviewKeys.lists() });
-            toast.success('Review deleted successfully');
+            toast.success('Review updated successfully');
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || 'Failed to delete review');

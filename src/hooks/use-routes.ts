@@ -79,7 +79,7 @@ export const useDeleteRoute = () => {
         mutationFn: (id: string) => routeService.deleteRoute(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: routeKeys.lists() });
-            toast.success('Route deleted successfully');
+            toast.success('Route updated successfully');
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || 'Failed to delete route');
