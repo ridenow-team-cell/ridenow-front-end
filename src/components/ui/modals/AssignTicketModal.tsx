@@ -105,15 +105,6 @@ const AssignTicketModal: React.FC<AssignTicketModalProps> = ({
                         )}
                     </div>
 
-                    {/* Staff Summary */}
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <div className="flex items-center gap-2">
-                            <Users size={18} className="text-blue-600" />
-                            <span className="text-sm text-blue-800">
-                                {staffUsers.length - 1} staff members available for assignment
-                            </span>
-                        </div>
-                    </div>
                 </div>
 
                 <div className="flex justify-end gap-4">
