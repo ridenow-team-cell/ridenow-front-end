@@ -1,11 +1,14 @@
 "use client"
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, MapPin, Plus, Trash2, Clock, X, Loader2, Route as RouteIcon, Calendar, Navigation } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronDown, MapPin, Plus, Trash2, Clock, X, Loader2, Route as RouteIcon, Calendar, Navigation, Search } from 'lucide-react';
 import BaseModal from './BaseModal';
 import { useCreateRoute, useUpdateRoute } from '@/hooks/use-routes';
 import { routeService } from '@/services/route-service';
 import { CreateRouteRequest, UpdateRouteRequest, RouteStop } from '@/types/route';
 import { toast } from 'react-hot-toast';
+
+// Google Maps API Key
+const GOOGLE_MAPS_API_KEY = 'AIzaSyBjpTeVMERj4TPGN8RU6UOmCtt6nnYVVqk';
 
 interface AddRouteModalProps {
     isOpen: boolean;
@@ -23,6 +26,237 @@ interface AddRouteModalProps {
     };
     isEdit?: boolean;
 }
+
+// Declare Google Maps types
+declare global {
+    interface Window {
+        google: any;
+        initGoogleMaps: () => void;
+    }
+}
+
+// Individual Stop Component with Autocomplete
+interface StopInputProps {
+    stop: Omit<RouteStop, 'order'>;
+    index: number;
+    updateStop: (index: number, field: keyof RouteStop, value: any) => void;
+    errors: Record<string, string>;
+    isGoogleLoaded: boolean;
+}
+
+const StopInput: React.FC<StopInputProps> = ({ stop, index, updateStop, errors, isGoogleLoaded }) => {
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isGeocoding, setIsGeocoding] = useState(false);
+    const [inputValue, setInputValue] = useState(stop.address);
+    const autocompleteServiceRef = useRef<any>(null);
+    const placesServiceRef = useRef<any>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Initialize autocomplete service when Google is loaded
+    useEffect(() => {
+        if (isGoogleLoaded && window.google) {
+            if (!autocompleteServiceRef.current) {
+                autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+            }
+            if (!placesServiceRef.current) {
+                placesServiceRef.current = new window.google.maps.places.PlacesService(
+                    document.createElement('div')
+                );
+            }
+        }
+    }, [isGoogleLoaded]);
+
+    // Update input value when stop address changes
+    useEffect(() => {
+        setInputValue(stop.address);
+    }, [stop.address]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setInputValue(value);
+        updateStop(index, 'address', value);
+
+        if (value.length > 2 && autocompleteServiceRef.current) {
+            fetchSuggestions(value);
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    const fetchSuggestions = (input: string) => {
+        if (!autocompleteServiceRef.current) return;
+
+        autocompleteServiceRef.current.getPlacePredictions(
+            {
+                input,
+                componentRestrictions: { country: 'ng' },
+                // Use only one type or remove types parameter entirely
+                types: ['geocode'] // This is for addresses only
+            },
+            (predictions: any[], status: string) => {
+                if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+                    setSuggestions(predictions);
+                    setShowSuggestions(true);
+                } else {
+                    setSuggestions([]);
+                    setShowSuggestions(false);
+                }
+            }
+        );
+    };
+
+    const handleSelectSuggestion = (placeId: string, description: string) => {
+        setInputValue(description);
+        updateStop(index, 'address', description);
+        setShowSuggestions(false);
+        setSuggestions([]);
+
+        getPlaceDetails(placeId);
+    };
+
+    const getPlaceDetails = (placeId: string) => {
+        if (!placesServiceRef.current) return;
+
+        setIsGeocoding(true);
+
+        placesServiceRef.current.getDetails(
+            {
+                placeId: placeId,
+                fields: ['geometry', 'formatted_address', 'address_components']
+            },
+            (place: any, status: string) => {
+                if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
+                    const { geometry, formatted_address } = place;
+
+                    // Update coordinates
+                    if (geometry && geometry.location) {
+                        updateStop(index, 'latitude', geometry.location.lat());
+                        updateStop(index, 'longitude', geometry.location.lng());
+                        console.log('Coordinates updated:', geometry.location.lat(), geometry.location.lng());
+                    }
+
+                    // Update address with formatted address (more accurate)
+                    if (formatted_address) {
+                        updateStop(index, 'address', formatted_address);
+                        setInputValue(formatted_address);
+                    }
+
+                    toast.success('Coordinates found!');
+                } else {
+                    toast.error('Could not fetch location details');
+                }
+                setIsGeocoding(false);
+            }
+        );
+    };
+
+    const handleGeocodeManualAddress = async () => {
+        if (!inputValue.trim() || !window.google) return;
+
+        setIsGeocoding(true);
+
+        const geocoder = new window.google.maps.Geocoder();
+
+        geocoder.geocode(
+            { address: inputValue },
+            (results: any[], status: string) => {
+                if (status === window.google.maps.GeocoderStatus.OK && results[0]) {
+                    const location = results[0].geometry.location;
+                    updateStop(index, 'latitude', location.lat());
+                    updateStop(index, 'longitude', location.lng());
+
+                    console.log('Manual geocode coordinates:', location.lat(), location.lng());
+
+                    // Update address with formatted address if available
+                    if (results[0].formatted_address) {
+                        updateStop(index, 'address', results[0].formatted_address);
+                        setInputValue(results[0].formatted_address);
+                    }
+
+                    toast.success('Coordinates found for address!');
+                } else if (status === window.google.maps.GeocoderStatus.ZERO_RESULTS) {
+                    toast.error('No results found for this address');
+                } else {
+                    toast.error('Could not find coordinates for this address');
+                }
+                setIsGeocoding(false);
+            }
+        );
+    };
+
+    // Handle Enter key press for manual geocoding
+    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && inputValue.trim().length > 5) {
+            e.preventDefault();
+            handleGeocodeManualAddress();
+        }
+    };
+
+    return (
+        <div className="relative">
+            <label className="block text-xs text-gray-600 mb-1">Address *</label>
+            <div className="relative">
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onFocus={() => inputValue.length > 2 && fetchSuggestions(inputValue)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Type full address to get coordinates..."
+                    disabled={!isGoogleLoaded}
+                    className={`w-full px-3 py-1.5 pl-9 pr-20 border rounded-lg text-gray-800 text-sm ${errors[`stop_${index}_address`] ? 'border-red-500' : 'border-gray-300'
+                        } ${!isGoogleLoaded ? 'bg-gray-100' : ''}`}
+                />
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    {isGeocoding ? (
+                        <Loader2 size={14} className="text-gray-400 animate-spin" />
+                    ) : (
+                        <Search size={14} className="text-gray-400" />
+                    )}
+                </div>
+                {isGoogleLoaded && inputValue.trim().length > 5 && (
+                    <button
+                        type="button"
+                        onClick={handleGeocodeManualAddress}
+                        disabled={isGeocoding}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded hover:bg-blue-200 transition-colors disabled:opacity-50"
+                        title="Get coordinates for this address"
+                    >
+                        Get Coords
+                    </button>
+                )}
+            </div>
+
+            {/* Autocomplete Suggestions */}
+            {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {suggestions.map((suggestion) => (
+                        <div
+                            key={suggestion.place_id}
+                            className="px-3 py-2 cursor-pointer hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                            onMouseDown={() => handleSelectSuggestion(suggestion.place_id, suggestion.description)}
+                        >
+                            <div className="font-medium text-sm text-gray-800">{suggestion.structured_formatting.main_text}</div>
+                            <div className="text-xs text-gray-500">{suggestion.structured_formatting.secondary_text}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {errors[`stop_${index}_address`] && (
+                <p className="text-red-500 text-xs mt-1">{errors[`stop_${index}_address`]}</p>
+            )}
+
+            {!isGoogleLoaded && (
+                <p className="text-amber-600 text-xs mt-1">Loading Google Maps...</p>
+            )}
+        </div>
+    );
+};
 
 const AddRouteModal: React.FC<AddRouteModalProps> = ({
     isOpen,
@@ -43,6 +277,53 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+    const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+
+    // Load Google Maps script
+    useEffect(() => {
+        if (isOpen && !isGoogleLoaded && !isLoadingGoogle) {
+            loadGoogleMaps();
+        }
+    }, [isOpen, isGoogleLoaded, isLoadingGoogle]);
+
+    const loadGoogleMaps = () => {
+        if (window.google) {
+            setIsGoogleLoaded(true);
+            return;
+        }
+
+        setIsLoadingGoogle(true);
+
+        // Check if script is already loading
+        const existingScript = document.getElementById('google-maps-script');
+        if (existingScript) {
+            // If script exists but Google isn't loaded yet, wait for it
+            window.initGoogleMaps = () => setIsGoogleLoaded(true);
+            return;
+        }
+
+        // Create script element
+        const script = document.createElement('script');
+        script.id = 'google-maps-script';
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGoogleMaps`;
+        script.async = true;
+        script.defer = true;
+
+        // Define callback function
+        window.initGoogleMaps = () => {
+            setIsGoogleLoaded(true);
+            setIsLoadingGoogle(false);
+        };
+
+        script.onerror = () => {
+            console.error('Failed to load Google Maps');
+            toast.error('Failed to load Google Maps. Please check your API key and internet connection.');
+            setIsLoadingGoogle(false);
+        };
+
+        document.head.appendChild(script);
+    };
 
     // Initialize form data for edit
     useEffect(() => {
@@ -102,7 +383,7 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
                 newErrors[`stop_${index}_address`] = `Stop ${index + 1} address is required`;
             }
             if (stop.latitude === 0 && stop.longitude === 0) {
-                newErrors[`stop_${index}_location`] = `Stop ${index + 1} location is required`;
+                newErrors[`stop_${index}_location`] = `Stop ${index + 1} location is required. Type address and click "Get Coords" or select from suggestions.`;
             }
         });
 
@@ -156,9 +437,13 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
     };
 
     const updateStop = (index: number, field: keyof RouteStop, value: any) => {
-        const updatedStops = [...formData.stops];
-        updatedStops[index] = { ...updatedStops[index], [field]: value };
-        setFormData(prev => ({ ...prev, stops: updatedStops }));
+        console.log(`Updating stop ${index}, field ${field} to`, value);
+
+        setFormData(prev => {
+            const updatedStops = [...prev.stops];
+            updatedStops[index] = { ...updatedStops[index], [field]: value };
+            return { ...prev, stops: updatedStops };
+        });
 
         // Clear errors for this field
         const errorKey = `stop_${index}_${field}`;
@@ -256,6 +541,28 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
         toast.success(`Duration calculated: ${hours}h ${minutes}m`);
     };
 
+    // Show loading state while Google Maps loads
+    const renderLoadingState = () => (
+        <BaseModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={isEdit ? 'Edit Route' : 'Add New Route'}
+            size="xl"
+        >
+            <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#0066CC]" />
+                    <p className="mt-3 text-gray-600">Loading Google Maps...</p>
+                    <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
+                </div>
+            </div>
+        </BaseModal>
+    );
+
+    if (isLoadingGoogle || (!isGoogleLoaded && isOpen)) {
+        return renderLoadingState();
+    }
+
     return (
         <BaseModal
             isOpen={isOpen}
@@ -332,11 +639,11 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
                 {/* Route Stops */}
                 <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                            <MapPin className="w-5 h-5 text-gray-600" />
-                            Route Stops *
-                        </h3>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                                <MapPin className="w-5 h-5 text-gray-600" />
+                                Route Stops *
+                            </h3>
                             <button
                                 type="button"
                                 onClick={calculateDistance}
@@ -345,6 +652,8 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
                             >
                                 Calculate Distance
                             </button>
+                        </div>
+                        <div className="flex gap-2">
                             <button
                                 type="button"
                                 onClick={addStop}
@@ -398,20 +707,60 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
                                         {errors[`stop_${index}_name`] && (
                                             <p className="text-red-500 text-xs mt-1">{errors[`stop_${index}_name`]}</p>
                                         )}
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Enter a descriptive name for this stop (different from the address)
+                                        </p>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-xs text-gray-600 mb-1">Address *</label>
-                                        <input
-                                            type="text"
-                                            value={stop.address}
-                                            onChange={(e) => updateStop(index, 'address', e.target.value)}
-                                            placeholder="Full address including city and country"
-                                            className={`w-full px-3 py-1.5 border rounded-lg text-gray-800 text-sm ${errors[`stop_${index}_address`] ? 'border-red-500' : 'border-gray-300'
-                                                }`}
-                                        />
-                                        {errors[`stop_${index}_address`] && (
-                                            <p className="text-red-500 text-xs mt-1">{errors[`stop_${index}_address`]}</p>
+                                    {/* Address with Autocomplete */}
+                                    <StopInput
+                                        stop={stop}
+                                        index={index}
+                                        updateStop={updateStop}
+                                        errors={errors}
+                                        isGoogleLoaded={isGoogleLoaded}
+                                    />
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">Latitude *</label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                value={stop.latitude || ''}
+                                                onChange={(e) => updateStop(index, 'latitude', parseFloat(e.target.value) || 0)}
+                                                placeholder="0"
+                                                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-gray-800 text-sm bg-gray-100"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">Longitude *</label>
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                value={stop.longitude || ''}
+                                                onChange={(e) => updateStop(index, 'longitude', parseFloat(e.target.value) || 0)}
+                                                placeholder="Will auto-fill from address"
+                                                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-gray-800 text-sm bg-gray-100"
+                                            />
+                                        </div>
+                                    </div>
+                                    {errors[`stop_${index}_location`] && (
+                                        <p className="text-red-500 text-xs mt-1">{errors[`stop_${index}_location`]}</p>
+                                    )}
+
+                                    {/* Coordinate Status */}
+                                    <div className="text-xs mt-1">
+                                        {stop.latitude !== 0 && stop.longitude !== 0 ? (
+                                            <div className="flex items-center gap-2 text-green-600">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <span>Coordinates: {stop.latitude.toFixed(6)}, {stop.longitude.toFixed(6)}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2 text-amber-600">
+                                                <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                                                <span>Enter address and click "Get Coords" or select from suggestions</span>
+                                            </div>
                                         )}
                                     </div>
 
@@ -454,36 +803,6 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="block text-xs text-gray-600 mb-1">Latitude *</label>
-                                            <input
-                                                type="number"
-                                                step="any"
-                                                value={stop.latitude}
-                                                onChange={(e) => updateStop(index, 'latitude', parseFloat(e.target.value) || 0)}
-                                                placeholder="e.g., 40.7128"
-                                                className={`w-full px-3 py-1.5 border rounded-lg text-gray-800 text-sm ${errors[`stop_${index}_location`] ? 'border-red-500' : 'border-gray-300'
-                                                    }`}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-600 mb-1">Longitude *</label>
-                                            <input
-                                                type="number"
-                                                step="any"
-                                                value={stop.longitude}
-                                                onChange={(e) => updateStop(index, 'longitude', parseFloat(e.target.value) || 0)}
-                                                placeholder="e.g., -74.0060"
-                                                className={`w-full px-3 py-1.5 border rounded-lg text-gray-800 text-sm ${errors[`stop_${index}_location`] ? 'border-red-500' : 'border-gray-300'
-                                                    }`}
-                                            />
-                                        </div>
-                                    </div>
-                                    {errors[`stop_${index}_location`] && (
-                                        <p className="text-red-500 text-xs mt-1">Coordinates are required for distance calculation</p>
-                                    )}
                                 </div>
                             </div>
                         ))}
@@ -510,18 +829,11 @@ const AddRouteModal: React.FC<AddRouteModalProps> = ({
                                     onChange={handleInputChange}
                                     step="0.1"
                                     min="0"
-                                    placeholder="Enter distance or calculate"
+                                    placeholder="Enter distance "
                                     className={`w-full px-4 py-2 border rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0066CC] ${errors.distance ? 'border-red-500' : 'border-gray-300'
                                         }`}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={calculateDuration}
-                                    disabled={!formData.distance || formData.distance <= 0}
-                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Calc Duration
-                                </button>
+
                             </div>
                             {errors.distance && (
                                 <p className="text-red-500 text-xs mt-1">{errors.distance}</p>
