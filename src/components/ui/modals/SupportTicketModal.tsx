@@ -708,21 +708,6 @@ const SupportTicketModal: React.FC<SupportTicketModalProps> = ({
                         )}
                     </div>
 
-                    {/* Important Note */}
-                    <div className="bg-blue-50 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                            <AlertCircle size={20} className="text-blue-600 mt-0.5" />
-                            <div>
-                                <p className="font-medium text-blue-800">Important Information</p>
-                                <ul className="text-sm text-blue-700 mt-1 space-y-1">
-                                    <li>• <strong>Assigned To</strong> field is required by the system</li>
-                                    <li>• Select "Unassigned" if you want to assign it later</li>
-                                    <li>• Related fields (Bus, Driver, Route) are optional</li>
-                                    <li>• You can update all fields after ticket creation</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div className="flex justify-end gap-4 mt-8">
