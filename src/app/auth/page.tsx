@@ -130,7 +130,7 @@ const RideNowLogin: React.FC = () => {
 
     // Admin credentials
     const ADMIN_EMAIL = 'admin@ridenow.com';
-    const ADMIN_PASSWORD = 'Ridenow247';
+    const ADMIN_PASSWORD = 'Ridenow#247';
 
     const validateForm = () => {
         const newErrors: { email?: string; password?: string } = {};

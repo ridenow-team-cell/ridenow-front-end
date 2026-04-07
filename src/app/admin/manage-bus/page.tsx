@@ -86,20 +86,7 @@ const ManageBusPage = () => {
         { key: 'model', header: 'Model' },
         { key: 'make', header: 'Make' },
         { key: 'registrationName', header: 'Reg. Name' },
-        {
-            key: 'color',
-            header: 'Color',
-            render: (bus: Bus) => (
-                <div className="flex items-center space-x-2">
-                    <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: bus.color.toLowerCase() }}
-                    ></div>
-                    <span>{bus.color}</span>
-                </div>
-            )
-        },
-        { key: 'year', header: 'Year' },
+
         {
             key: 'totalSeats',
             header: 'Seats',
@@ -373,6 +360,7 @@ const ManageBusPage = () => {
                         columns={columns}
                         data={filteredBuses()}
                         actions={activeTab === 'add' ? addTabActions : blockTabActions}
+                        actionsLayout="row"
                     />
 
                     {/* Pagination */}

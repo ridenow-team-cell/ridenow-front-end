@@ -383,6 +383,7 @@ const ManageUserPage = () => {
                         columns={columns}
                         data={filteredUsers()}
                         actions={activeTab === 'add' ? addTabActions : blockTabActions}
+                        actionsLayout="row"
                     />
 
                     {/* Pagination */}

@@ -18,19 +18,24 @@ export interface DriverDetails extends Driver {
         id: string;
         name: string;
         registrationName: string;
+        model?: string;
     };
     route?: {
         id: string;
         name: string;
         description: string;
+        stops: any[];
     };
-    performance?: {
+    statistics?: {
         totalTrips: number;
         completedTrips: number;
-        rating: number;
-        averageSpeed: number;
-        safetyScore: number;
+        activeTrips: number;
+        averageRating: number;
+        safetyRating: number;
+        onTimeRate: number;
+        totalReviews: number;
     };
+    activeSchedules?: any[];
 }
 
 export interface DriverQueryParams {

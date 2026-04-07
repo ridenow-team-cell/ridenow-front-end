@@ -70,9 +70,9 @@ const ManageDriverPage = () => {
     useEffect(() => {
         if (driversData && Array.isArray(driversData)) {
             setAllDrivers(driversData);
-        } else if (driversData && typeof driversData === 'object' && driversData.data) {
+        } else if (driversData && typeof driversData === 'object' && (driversData as any).data) {
             // If API returns paginated response with data property
-            setAllDrivers(driversData.data);
+            setAllDrivers((driversData as any).data);
         }
     }, [driversData]);
 
@@ -480,6 +480,7 @@ const ManageDriverPage = () => {
                         columns={columns}
                         data={getPaginatedDrivers()}
                         actions={activeTab === 'active' ? activeTabActions : inactiveTabActions}
+                        actionsLayout="row"
                     />
 
                     {/* Pagination */}

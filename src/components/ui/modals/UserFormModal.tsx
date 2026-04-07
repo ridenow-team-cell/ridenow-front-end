@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import BaseModal from './BaseModal';
+import SideModal from './SideModal';
 import { useCheckUserExists } from '@/hooks/use-users';
 
 interface UserFormModalProps {
@@ -10,6 +10,7 @@ interface UserFormModalProps {
     onSubmit: (data: UserFormData) => void;
     initialData?: UserFormData;
     isEdit?: boolean;
+    defaultRole?: string;
 }
 
 interface UserFormData {
@@ -30,14 +31,15 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     onClose,
     onSubmit,
     initialData,
-    isEdit = false
+    isEdit = false,
+    defaultRole
 }) => {
     const [formData, setFormData] = useState<UserFormData>(
         initialData || {
             name: '',
             email: '',
             schoolId: '',
-            role: 'Student',
+            role: defaultRole || 'Student',
             phoneNo: '',
             password: '',
             confirmPassword: '',
@@ -93,11 +95,11 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                     email: formData.email,
                     phone: formData.phoneNo
                 });
-                if (exists.exists) {
-                    if (exists.email === formData.email) {
+                if (exists && (exists as any).exists) {
+                    if ((exists as any).email === formData.email) {
                         newErrors.email = 'Email already exists';
                     }
-                    if (exists.phone === formData.phoneNo) {
+                    if ((exists as any).phone === formData.phoneNo) {
                         newErrors.phoneNo = 'Phone number already exists';
                     }
                 }
@@ -138,11 +140,10 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <SideModal
             isOpen={isOpen}
             onClose={onClose}
             title={isEdit ? 'Edit User' : 'Add User'}
-            size="xl"
         >
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -325,7 +326,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                     </button>
                 </div>
             </form>
-        </BaseModal>
+        </SideModal>
     );
 };
 

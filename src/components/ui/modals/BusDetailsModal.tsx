@@ -1,7 +1,7 @@
 "use client"
 import React from 'react';
 import { Bus, Clock, MapPin, Users, Calendar, Wrench, Route, User } from 'lucide-react';
-import BaseModal from './BaseModal';
+import SideModal from './SideModal';
 import { BusDetails } from '@/types/bus';
 import { busService } from '@/services/bus-service';
 
@@ -21,197 +21,163 @@ const BusDetailsModal: React.FC<BusDetailsModalProps> = ({
     const { bus, driver, route, activeSchedules, utilization } = busDetails;
 
     return (
-        <BaseModal
+        <SideModal
             isOpen={isOpen}
             onClose={onClose}
             title="Bus Details"
-            size="xl"
         >
-            <div className="space-y-6">
-                {/* Bus Basic Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-start justify-between">
+            <div className="space-y-6 pb-6">
+                {/* Header Information */}
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-800">{bus.name}</h3>
-                            <p className="text-sm text-gray-600">{bus.model} • {bus.make} • {bus.year}</p>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${busService.getStatusColor(bus.status)}`}>
+                            <span className={`inline-block px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2 ${bus.status === 'Available' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                                 {bus.status}
                             </span>
-                            <span className={`mt-2 px-3 py-1 rounded-full text-sm font-medium ${bus.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {bus.isActive ? 'Active' : 'Inactive'}
-                            </span>
+                            <h3 className="text-xl font-bold text-gray-900">{bus.name}</h3>
+                            <p className="text-gray-500 text-sm flex items-center gap-2 mt-1">
+                                <Bus size={14} />
+                                {bus.model} • {bus.make} • {bus.year}
+                            </p>
                         </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                        <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                <Bus className="w-4 h-4 text-blue-600" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Registration</p>
-                                <p className="font-medium text-gray-400">{bus.registrationName}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: bus.color.toLowerCase() }}></div>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Color</p>
-                                <p className="font-medium text-gray-400">{bus.color}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                                <Users className="w-4 h-4 text-green-600" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Seats</p>
-                                <p className="font-medium text-gray-400">{bus.totalSeats}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-                                <Calendar className="w-4 h-4 text-orange-600" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500">Added On</p>
-                                <p className="font-medium text-gray-400">{busService.formatDate(bus.createdAt)}</p>
-                            </div>
+                        <div className={`px-3 py-1 rounded-full text-[10px] font-bold ${bus.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {bus.isActive ? 'ACTIVE' : 'INACTIVE'}
                         </div>
                     </div>
                 </div>
 
-                {/* Driver & Route Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Driver Info */}
+                {/* Key Specifications Grid */}
+                <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center space-x-2 mb-3">
-                            <User className="w-5 h-5 text-gray-600" />
-                            <h4 className="font-semibold text-gray-800">Assigned Driver</h4>
+                        <div className="flex items-center gap-2 text-gray-400 mb-1">
+                            <Users size={16} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Capacity</span>
+                        </div>
+                        <p className="text-lg font-bold text-gray-800">{bus.totalSeats} Seats</p>
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-gray-400 mb-1">
+                            <MapPin size={16} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Registration</span>
+                        </div>
+                        <p className="text-lg font-bold text-gray-800">{bus.registrationName}</p>
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-gray-400 mb-1">
+                            <div className="w-3 h-3 rounded-full border border-gray-200" style={{ backgroundColor: bus.color.toLowerCase() }}></div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Color</span>
+                        </div>
+                        <p className="text-lg font-bold text-gray-800">{bus.color}</p>
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-gray-400 mb-1">
+                            <Calendar size={16} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Added On</span>
+                        </div>
+                        <p className="text-lg font-bold text-gray-800">{busService.formatDate(bus.createdAt)}</p>
+                    </div>
+                </div>
+
+                {/* Performance Stats */}
+                <div className="bg-white border border-gray-200 rounded-xl p-5">
+                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Operational Performance</h4>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <p className="text-2xl font-bold text-gray-900">{utilization.totalTrips}</p>
+                            <p className="text-[10px] text-gray-500 font-medium">Total Trips</p>
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-green-600">{utilization.completedTrips}</p>
+                            <p className="text-[10px] text-gray-500 font-medium">Completed</p>
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-blue-600">{utilization.activeTrips}</p>
+                            <p className="text-[10px] text-gray-500 font-medium">Active Now</p>
+                        </div>
+                        <div>
+                            <p className="text-2xl font-bold text-purple-600">{(utilization.seatUtilization * 100).toFixed(0)}%</p>
+                            <p className="text-[10px] text-gray-500 font-medium">Efficiency</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Assignment Details */}
+                <div className="space-y-4">
+                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Current Assignment</h4>
+                    
+                    {/* Driver Card */}
+                    <div className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                                <User size={18} />
+                            </div>
+                            <h5 className="font-bold text-gray-800">Driver</h5>
                         </div>
                         {driver ? (
-                            <div className="space-y-2">
-                                <p className="font-medium text-gray-400">{driver.fullName}</p>
-                                <p className="text-sm text-gray-600">{driver.email}</p>
-                                <p className="text-sm text-gray-600">{driver.phoneNumber}</p>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                                    {driver.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-gray-900">{driver.name}</p>
+                                    <p className="text-xs text-gray-500">{driver.phoneNo}</p>
+                                </div>
                             </div>
                         ) : (
-                            <p className="text-gray-500 italic">No driver assigned</p>
+                            <p className="text-xs text-gray-400 italic">No driver assigned</p>
                         )}
                     </div>
 
-                    {/* Route Info */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center space-x-2 mb-3">
-                            <Route className="w-5 h-5 text-gray-600" />
-                            <h4 className="font-semibold text-gray-800">Current Route</h4>
+                    {/* Route Card */}
+                    <div className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-1.5 bg-green-50 text-green-600 rounded-lg">
+                                <Route size={18} />
+                            </div>
+                            <h5 className="font-bold text-gray-800">Active Route</h5>
                         </div>
                         {route ? (
-                            <div className="space-y-2">
-                                <p className="font-medium text-gray-400">{route.name}</p>
-                                <p className="text-sm text-gray-600">{route.description}</p>
-                                <div className="flex items-center space-x-2">
-                                    <MapPin className="w-4 h-4 text-gray-400" />
-                                    <span className="text-sm text-gray-600">
-                                        {route.stops.length} stops
-                                    </span>
+                            <div>
+                                <p className="text-sm font-bold text-gray-900">{route.name}</p>
+                                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{route.description}</p>
+                                <div className="mt-3 flex items-center gap-2 text-[10px] font-bold text-blue-600 bg-blue-50 w-fit px-2 py-1 rounded">
+                                    <MapPin size={12} />
+                                    <span>{route.stops.length} STOPS</span>
                                 </div>
                             </div>
                         ) : (
-                            <p className="text-gray-500 italic">No route assigned</p>
+                            <p className="text-xs text-gray-400 italic">No route assigned</p>
                         )}
                     </div>
                 </div>
 
-                {/* Utilization Stats */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-800 mb-3">Utilization Statistics</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-gray-800">{utilization.totalTrips}</p>
-                            <p className="text-sm text-gray-600">Total Trips</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-green-600">{utilization.completedTrips}</p>
-                            <p className="text-sm text-gray-600">Completed</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-blue-600">{utilization.activeTrips}</p>
-                            <p className="text-sm text-gray-600">Active</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-purple-600">
-                                {(utilization.seatUtilization * 100).toFixed(1)}%
-                            </p>
-                            <p className="text-sm text-gray-600">Seat Utilization</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Active Schedules */}
+                {/* Schedules */}
                 {activeSchedules.length > 0 && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center space-x-2 mb-3">
-                            <Clock className="w-5 h-5 text-gray-600" />
-                            <h4 className="font-semibold text-gray-800">Active Schedules</h4>
-                        </div>
-                        <div className="space-y-3">
-                            {activeSchedules.map((schedule) => (
-                                <div key={schedule.id} className="border border-gray-100 rounded p-3">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-medium text-gray-400">
-                                                {busService.formatTime(schedule.departureTime)} - {busService.formatTime(schedule.arrivalTime)}
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                {schedule.daysOfWeek.join(', ')}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                                                {schedule.numberOfAvailableSeats} seats available
-                                            </span>
-                                            <span className={`px-2 py-1 text-xs rounded ${schedule.status === 'Scheduled' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                                {schedule.status}
-                                            </span>
-                                        </div>
+                    <div className="space-y-3">
+                        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Upcoming Schedule</h4>
+                        {activeSchedules.map((schedule) => (
+                            <div key={schedule.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <Clock size={16} className="text-gray-400" />
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-800">
+                                            {busService.formatTime(schedule.departureTime)} - {busService.formatTime(schedule.arrivalTime)}
+                                        </p>
+                                        <p className="text-[10px] text-gray-500">
+                                            {schedule.daysOfWeek.join(', ')}
+                                        </p>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Maintenance Status */}
-                {bus.status === 'Maintenance' && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <div className="flex items-center space-x-2">
-                            <Wrench className="w-5 h-5 text-yellow-600" />
-                            <h4 className="font-semibold text-yellow-800">Maintenance Note</h4>
-                        </div>
-                        <p className="text-sm text-yellow-700 mt-2">
-                            This bus is currently under maintenance. Expected return to service: Soon
-                        </p>
+                                <span className="text-[10px] font-bold text-blue-600">{schedule.numberOfAvailableSeats} seats left</span>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
-
-            <div className="mt-6 flex justify-end">
-                <button
-                    onClick={onClose}
-                    className="px-6 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors"
-                >
-                    Close
-                </button>
-            </div>
-        </BaseModal>
+        </SideModal>
     );
 };
 

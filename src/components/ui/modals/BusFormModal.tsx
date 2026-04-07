@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import BaseModal from './BaseModal';
+import SideModal from './SideModal';
 import { useCheckBusExists } from '@/hooks/use-bus';
 import { busService } from '@/services/bus-service';
 
@@ -152,11 +152,10 @@ const BusFormModal: React.FC<BusFormModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <SideModal
             isOpen={isOpen}
             onClose={onClose}
             title={isEdit ? 'Edit Bus' : 'Add Bus'}
-            size="xl"
         >
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -428,7 +427,7 @@ const BusFormModal: React.FC<BusFormModalProps> = ({
                     </button>
                 </div>
             </form>
-        </BaseModal>
+        </SideModal>
     );
 };
 

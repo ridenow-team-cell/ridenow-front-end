@@ -19,6 +19,7 @@ interface DataTableProps {
     columns: Column[];
     data: any[];
     actions?: Action[];
+    actionsLayout?: 'dropdown' | 'row';
     onRowClick?: (item: any) => void;
     showCheckbox?: boolean;
     selectedItems?: any[];
@@ -30,6 +31,7 @@ const DataTable: React.FC<DataTableProps> = ({
     columns,
     data,
     actions,
+    actionsLayout = 'dropdown',
     onRowClick,
     showCheckbox = false,
     selectedItems = [],
@@ -97,41 +99,62 @@ const DataTable: React.FC<DataTableProps> = ({
                             ))}
                             {actions && actions.length > 0 && (
                                 <td className="py-4 px-4 relative">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setDropdownOpen(dropdownOpen === index ? null : index);
-                                        }}
-                                        className="p-1 hover:bg-gray-100 rounded"
-                                    >
-                                        <img src="/assets/icons/drop.png" alt="" width={20} />
-                                    </button>
-                                    {dropdownOpen === index && (
+                                    {actionsLayout === 'row' ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {actions.map((action, actionIndex) => (
+                                                <button
+                                                    key={actionIndex}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        action.onClick(item);
+                                                    }}
+                                                    className={`px-3 py-1.5 text-xs font-medium rounded-md border border-gray-200 hover:bg-gray-50 transition-colors whitespace-nowrap flex items-center gap-1 ${action.className || 'text-[#010237]'
+                                                        }`}
+                                                >
+                                                    {action.icon}
+                                                    {action.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
                                         <>
-                                            <div
-                                                className="fixed inset-0 z-10"
+                                            <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setDropdownOpen(null);
+                                                    setDropdownOpen(dropdownOpen === index ? null : index);
                                                 }}
-                                            />
-                                            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
-                                                {actions.map((action, actionIndex) => (
-                                                    <button
-                                                        key={actionIndex}
+                                                className="p-1 hover:bg-gray-100 rounded"
+                                            >
+                                                <img src="/assets/icons/drop.png" alt="" width={20} />
+                                            </button>
+                                            {dropdownOpen === index && (
+                                                <>
+                                                    <div
+                                                        className="fixed inset-0 z-10"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            action.onClick(item);
                                                             setDropdownOpen(null);
                                                         }}
-                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${action.className || 'text-[#010237]'
-                                                            }`}
-                                                    >
-                                                        {action.icon}
-                                                        {action.label}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                                    />
+                                                    <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+                                                        {actions.map((action, actionIndex) => (
+                                                            <button
+                                                                key={actionIndex}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    action.onClick(item);
+                                                                    setDropdownOpen(null);
+                                                                }}
+                                                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 ${action.className || 'text-[#010237]'
+                                                                    }`}
+                                                            >
+                                                                {action.icon}
+                                                                {action.label}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
                                         </>
                                     )}
                                 </td>

@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Upload, X } from 'lucide-react';
-import BaseModal from './BaseModal';
+import SideModal from './SideModal';
 import { useCheckDriverExists } from '@/hooks/use-drivers';
 import { useBuses } from '@/hooks/use-bus'; // Fixed import
 import { useRoutes } from '@/hooks/use-routes'; // Add routes hook
@@ -12,6 +12,8 @@ interface DriverFormModalProps {
     onSubmit: (data: DriverFormData) => void;
     initialData?: DriverFormData;
     isEdit?: boolean;
+    buses?: any[];
+    routes?: any[];
 }
 
 interface DriverFormData {
@@ -24,8 +26,8 @@ interface DriverFormData {
     routeId: string;
     status: string;
     isActive: boolean;
-    password: string;
-    confirmPassword: string;
+    password?: string;
+    confirmPassword?: string;
 }
 
 const statusOptions = [
@@ -112,7 +114,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
 
         if (!isEdit && !formData.password) {
             newErrors.password = 'Password is required';
-        } else if (!isEdit && formData.password.length < 6) {
+        } else if (!isEdit && formData.password && formData.password.length < 6) {
             newErrors.password = 'Password must be at least 6 characters';
         }
 
@@ -131,11 +133,11 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
                     licenseNumber: formData.licenseNumber,
                     phone: formData.phoneNumber
                 });
-                if (response.exists) {
-                    if (response.licenseNumber === formData.licenseNumber) {
+                if (response && (response as any).exists) {
+                    if ((response as any).licenseNumber === formData.licenseNumber) {
                         newErrors.licenseNumber = 'License number already exists';
                     }
-                    if (response.phone === formData.phoneNumber) {
+                    if ((response as any).phone === formData.phoneNumber) {
                         newErrors.phoneNumber = 'Phone number already exists';
                     }
                 }
@@ -219,11 +221,10 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
     const routes = routesData || [];
 
     return (
-        <BaseModal
+        <SideModal
             isOpen={isOpen}
             onClose={onClose}
             title={isEdit ? 'Edit Driver' : 'Add Driver'}
-            size="xl"
         >
             <form onSubmit={handleSubmit}>
                 <div className="space-y-6">
@@ -609,7 +610,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
                     </button>
                 </div>
             </form>
-        </BaseModal>
+        </SideModal>
     );
 };
 
