@@ -65,14 +65,14 @@ const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                             <div className="text-3xl font-bold">{ticketService.formatPrice(ticketDetails.price)}</div>
                             <div className="flex items-center gap-2 mt-2">
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticketDetails.status === 'Booked' ? 'bg-blue-800 text-blue-100' :
-                                        ticketDetails.status === 'CheckedIn' ? 'bg-green-800 text-green-100' :
-                                            'bg-gray-800 text-gray-100'
+                                    ticketDetails.status === 'CheckedIn' ? 'bg-green-800 text-green-100' :
+                                        'bg-gray-800 text-gray-100'
                                     }`}>
                                     {ticketDetails.status}
                                 </span>
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${ticketDetails.paymentStatus === 'Paid' ? 'bg-green-800 text-green-100' :
-                                        ticketDetails.paymentStatus === 'Pending' ? 'bg-yellow-800 text-yellow-100' :
-                                            'bg-red-800 text-red-100'
+                                    ticketDetails.paymentStatus === 'Pending' ? 'bg-yellow-800 text-yellow-100' :
+                                        'bg-red-800 text-red-100'
                                     }`}>
                                     {ticketDetails.paymentStatus}
                                 </span>
@@ -147,8 +147,8 @@ const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                                     onClick={handleDownloadQR}
                                     disabled={!ticketDetails.qrCodeUrl}
                                     className={`px-4 py-2 rounded-lg flex items-center gap-2 ${ticketDetails.qrCodeUrl
-                                            ? 'bg-[#0066CC] text-white hover:bg-[#0055AA]'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        ? 'bg-[#0066CC] text-white hover:bg-[#0055AA]'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         }`}
                                 >
                                     <Download size={16} />

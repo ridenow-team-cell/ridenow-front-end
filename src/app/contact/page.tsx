@@ -109,7 +109,7 @@ const ContactUsPage: React.FC = () => {
                     <div className="space-y-8">
                         <div>
                             <h2 className={`text-2xl md:text-3xl font-bold mb-6 transition-all duration-700 ${isDark ? 'text-white' : 'text-[#343434]'} hover:tracking-wide`}>
-                                Get in Touch
+                                Get in Touch with Ridenow
                             </h2>
 
                             <div className="space-y-6">

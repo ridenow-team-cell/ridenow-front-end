@@ -211,7 +211,7 @@ const RideNowLogin: React.FC = () => {
 
                     <div className="mb-6 sm:mb-8">
                         <h2 className="text-xl sm:text-2xl font-semibold text-[#005baf] mb-1 sm:mb-2">Admin Login</h2>
-                        <p className="text-[#343434] text-sm sm:text-base">Enter your email and password to login</p>
+                        <p className="text-[#343434] text-sm sm:text-base">Enter your credentials to login</p>
                     </div>
 
                     <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} onKeyPress={handleKeyPress}>
@@ -258,7 +258,7 @@ const RideNowLogin: React.FC = () => {
                                         <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin mr-2"></div>
                                         Logging in...
                                     </div>
-                                ) : 'Login'}
+                                ) : 'Proceed to Dashboard'}
                             </Button>
                         </div>
                     </form>
