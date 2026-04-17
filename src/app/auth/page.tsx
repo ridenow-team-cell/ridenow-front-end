@@ -258,7 +258,7 @@ const RideNowLogin: React.FC = () => {
                                         <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin mr-2"></div>
                                         Logging in...
                                     </div>
-                                ) : 'Proceed to Dashboard'}
+                                ) : 'Login'}
                             </Button>
                         </div>
                     </form>
