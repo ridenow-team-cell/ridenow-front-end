@@ -27,6 +27,7 @@ import { Route, RouteQueryParams } from '@/types/route';
 import { Schedule, ScheduleQueryParams } from '@/types/schedule';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { Plus } from 'lucide-react';
 
 const RoutesSchedulesPage = () => {
     const [activeTab, setActiveTab] = useState<'routes' | 'schedules'>('routes');
@@ -38,7 +39,6 @@ const RoutesSchedulesPage = () => {
         limit: 10,
         sortBy: 'name',
         sortOrder: 'asc',
-
     });
 
     // Schedule states
@@ -259,17 +259,8 @@ const RoutesSchedulesPage = () => {
     ];
 
     // Handlers
-    const handleAddRoute = (routeData: any) => {
-        createRoute.mutate(routeData, {
-            onSuccess: () => {
-                setShowAddRouteModal(false);
-                setShowSuccessModal(true);
-                refetchRoutes();
-            },
-            onError: (error: any) => {
-                toast.error(error.message || 'Failed to create route');
-            }
-        });
+    const handleAddRoute = () => {
+        router.push('/admin/routes/add');
     };
 
     const handleUpdateRoute = (updateData: any) => {
@@ -458,57 +449,70 @@ const RoutesSchedulesPage = () => {
     };
 
     return (
-        <div className="p-4 sm:p-6">
-            {/* Tabs */}
-            <div className="bg-white rounded-lg mb-6">
-                <div className="flex border-b">
+        <div className="p-4 sm:p-6 bg-[#F9FAFB] min-h-screen">
+            {/* Header with Tab and View Toggles */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div className="bg-white p-1 rounded-2xl shadow-sm border border-gray-100 flex">
                     <button
                         onClick={() => setActiveTab('routes')}
-                        className={`px-8 py-4 text-base font-medium relative ${activeTab === 'routes' ? 'text-gray-800' : 'text-gray-500'}`}
+                        className={`px-8 py-3 text-sm font-bold rounded-xl transition-all ${activeTab === 'routes' ? 'bg-[#0066CC] text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:text-gray-800'}`}
                     >
                         Routes
-                        {activeTab === 'routes' && (
-                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#E7A533]"></div>
-                        )}
                     </button>
                     <button
                         onClick={() => setActiveTab('schedules')}
-                        className={`px-8 py-4 text-base font-medium relative ${activeTab === 'schedules' ? 'text-gray-800' : 'text-gray-500'}`}
+                        className={`px-8 py-3 text-sm font-bold rounded-xl transition-all ${activeTab === 'schedules' ? 'bg-[#0066CC] text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:text-gray-800'}`}
                     >
                         Schedules
-                        {activeTab === 'schedules' && (
-                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#E7A533]"></div>
-                        )}
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => {
+                            if (activeTab === 'routes') {
+                                handleAddRoute();
+                            } else {
+                                handleAddSchedule();
+                            }
+                        }}
+                        className="px-6 py-3.5 bg-[#E7A533] text-white rounded-2xl text-sm font-bold hover:bg-[#d1942d] transition-all shadow-lg shadow-orange-100 flex items-center gap-2"
+                    >
+                        <Plus size={18} />
+                        Add {activeTab === 'routes' ? 'Route' : 'Schedule'}
                     </button>
                 </div>
             </div>
 
             {/* Filter Section */}
-            <FilterSection
-                onAdd={() => activeTab === 'routes' ? setShowAddRouteModal(true) : handleAddSchedule()}
-                onSearch={activeTab === 'routes' ? handleRouteSearch : handleScheduleSearch}
-                showAddButton={true}
-                addButtonText={activeTab === 'routes' ? 'Add Route' : 'Add Schedule'}
-            />
+            <div className="mb-6">
+                <FilterSection
+                    onAdd={activeTab === 'routes' ? handleAddRoute : handleAddSchedule}
+                    onSearch={activeTab === 'routes' ? handleRouteSearch : handleScheduleSearch}
+                    showAddButton={false} // Handled in header
+                />
+            </div>
 
-            {/* Loading State */}
+            {/* Main Content Area */}
             {(activeTab === 'routes' ? routesLoading : schedulesLoading) ? (
-                <div className="bg-white rounded-lg p-8 text-center">
+                <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066CC] mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading {activeTab}...</p>
+                    <p className="mt-4 text-gray-500 font-medium tracking-tight">Syncing {activeTab}...</p>
                 </div>
             ) : (
-                <>
+                <div className="animate-in slide-in-from-bottom-4 duration-500">
                     {/* Data Table */}
-                    <DataTable
-                        columns={activeTab === 'routes' ? routesColumns : schedulesColumns}
-                        data={getPaginatedData()}
-                        actions={activeTab === 'routes' ? routeActions : scheduleActions}
-                    />
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                        <DataTable
+                            columns={activeTab === 'routes' ? routesColumns : schedulesColumns}
+                            data={getPaginatedData()}
+                            actions={activeTab === 'routes' ? routeActions : scheduleActions}
+                        />
+                    </div>
 
                     {/* Pagination */}
                     {getTotalItems() > 0 && (
-                        <div className="mt-6">
+                        <div className="mt-8">
                             <Pagination
                                 currentPage={activeTab === 'routes' ? (routeFilters.page || 1) : (scheduleFilters.page || 1)}
                                 totalPages={getTotalPages()}
@@ -521,29 +525,29 @@ const RoutesSchedulesPage = () => {
 
                     {/* No Data Message */}
                     {getTotalItems() === 0 && (
-                        <div className="bg-white rounded-lg p-8 text-center">
-                            <p className="text-gray-600">No {activeTab} found</p>
+                        <div className="bg-white rounded-3xl p-20 text-center border border-gray-100 shadow-sm">
+                            <Plus size={48} className="mx-auto text-gray-200 mb-4" />
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">No {activeTab} Found</h3>
+                            <p className="text-gray-500 mb-6">Start by creating your first {activeTab.slice(0, -1)}.</p>
                             <button
-                                onClick={() => activeTab === 'routes' ? setShowAddRouteModal(true) : handleAddSchedule()}
-                                className="mt-4 px-6 py-2 bg-[#0066CC] text-white rounded-lg hover:bg-[#0052a3] transition-colors"
+                                onClick={() => activeTab === 'routes' ? handleAddRoute() : handleAddSchedule()}
+                                className="px-8 py-3.5 bg-[#0066CC] text-white rounded-2xl text-sm font-bold hover:bg-[#0052a3] transition-all shadow-lg shadow-blue-100"
                             >
-                                Add New {activeTab === 'routes' ? 'Route' : 'Schedule'}
+                                Get Started
                             </button>
                         </div>
                     )}
-                </>
+                </div>
             )}
 
             {/* Modals */}
-            {/* Add Route Modal */}
             <AddRouteModal
-                isOpen={showAddRouteModal}
+                isOpen={showAddRouteModal && viewMode === 'table'} // Only show modal in table view
                 onClose={() => setShowAddRouteModal(false)}
                 onSubmit={handleAddRoute}
                 isEdit={false}
             />
 
-            {/* Edit Route Modal */}
             <AddRouteModal
                 isOpen={showEditRouteModal}
                 onClose={() => {
@@ -583,7 +587,7 @@ const RoutesSchedulesPage = () => {
                             ? selectedRoute?.isActive ? 'Route updated successfully' : 'Route updated successfully'
                             : editingRoute
                                 ? 'Route Updated Successfully'
-                                : 'Schedule Cancelled Successfully'
+                                : 'Route Created Successfully'
                 }
                 type={activeTab === 'routes' ? 'route' : 'status'}
             />
