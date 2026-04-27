@@ -108,7 +108,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuToggle }) => {
                                 className="flex items-center gap-2 sm:gap-3 hover:bg-gray-100 p-2 rounded-lg transition-colors"
                             >
                                 <div className="hidden sm:block text-right">
-                                    <p className="text-sm font-semibold text-gray-800">Jerry Attah</p>
+                                    <p className="text-sm font-semibold text-gray-800">Faiza Zoungrana</p>
                                     <p className="text-xs text-gray-500">Admin</p>
                                 </div>
                                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center">
