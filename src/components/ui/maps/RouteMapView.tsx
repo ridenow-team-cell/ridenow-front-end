@@ -93,7 +93,7 @@ const RouteMapView: React.FC<RouteMapViewProps> = ({
     const [selectedStopIndex, setSelectedStopIndex] = useState<number | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [displayExistingRoutes, setDisplayExistingRoutes] = useState(showAllRoutes);
-    const [mapTypeId, setMapTypeId] = useState<google.maps.MapTypeId>(google.maps.MapTypeId.ROADMAP);
+    const [mapTypeId, setMapTypeId] = useState<string>('roadmap');
     const [tilt, setTilt] = useState(0);
     
     const { isLoaded, loadError } = useJsApiLoader({
@@ -393,12 +393,12 @@ const RouteMapView: React.FC<RouteMapViewProps> = ({
 
                     <button 
                         onClick={() => {
-                            const newType = mapTypeId === google.maps.MapTypeId.ROADMAP 
-                                ? google.maps.MapTypeId.SATELLITE 
-                                : google.maps.MapTypeId.ROADMAP;
-                            setMapTypeId(newType as any);
+                            const newType = mapTypeId === 'roadmap' 
+                                ? 'satellite' 
+                                : 'roadmap';
+                            setMapTypeId(newType);
                         }}
-                        className={`p-3 rounded-xl shadow-lg transition-all border border-gray-100 ${mapTypeId === google.maps.MapTypeId.SATELLITE ? 'bg-[#0066CC] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                        className={`p-3 rounded-xl shadow-lg transition-all border border-gray-100 ${mapTypeId === 'satellite' ? 'bg-[#0066CC] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
                         title="Toggle Satellite View"
                     >
                         <Globe size={20} />
