@@ -68,6 +68,115 @@ const routePaths = {
         { lat: 9.0350, lng: 7.4100 }, // Gudu II
     ]
 };
+type SimStudent = { id: string; stopIdx: number; startPos: {lat: number, lng: number}; pos: {lat: number, lng: number}; phase: 'walking' | 'waiting' | 'boarded'; };
+
+const SCENARIO_BUS_START = { lat: 9.0765, lng: 7.4800 }; // Wuse 2
+const SCENARIO_STOPS = [
+    { lat: 9.0680, lng: 7.4700 }, // Stop 1: Utako
+    { lat: 9.0650, lng: 7.4400 }, // Stop 2: Wuye
+    { lat: 9.0450, lng: 7.4200 }, // Stop 3: Jabi Junction
+    { lat: 9.0250, lng: 7.4000 }, // Stop 4: Lugbe Entrance
+];
+const SCENARIO_DEST = { lat: 9.0150, lng: 7.3900 };      // Nile University
+
+const INITIAL_STUDENTS: SimStudent[] = [
+    { id: 'std_1', stopIdx: 0, startPos: { lat: 9.0700, lng: 7.4720 }, pos: { lat: 9.0700, lng: 7.4720 }, phase: 'walking' },
+    { id: 'std_2', stopIdx: 0, startPos: { lat: 9.0670, lng: 7.4680 }, pos: { lat: 9.0670, lng: 7.4680 }, phase: 'walking' },
+    { id: 'std_3', stopIdx: 1, startPos: { lat: 9.0660, lng: 7.4420 }, pos: { lat: 9.0660, lng: 7.4420 }, phase: 'walking' },
+    { id: 'std_4', stopIdx: 1, startPos: { lat: 9.0630, lng: 7.4380 }, pos: { lat: 9.0630, lng: 7.4380 }, phase: 'walking' },
+    { id: 'std_5', stopIdx: 2, startPos: { lat: 9.0470, lng: 7.4220 }, pos: { lat: 9.0470, lng: 7.4220 }, phase: 'walking' },
+    { id: 'std_6', stopIdx: 3, startPos: { lat: 9.0270, lng: 7.4020 }, pos: { lat: 9.0270, lng: 7.4020 }, phase: 'walking' },
+    { id: 'std_7', stopIdx: 3, startPos: { lat: 9.0230, lng: 7.3980 }, pos: { lat: 9.0230, lng: 7.3980 }, phase: 'walking' },
+];
+
+const MAP_STYLES = [
+    {
+        "elementType": "geometry",
+        "stylers": [{ "color": "#f5f5f5" }]
+    },
+    {
+        "elementType": "labels.icon",
+        "stylers": [{ "visibility": "off" }]
+    },
+    {
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#616161" }]
+    },
+    {
+        "elementType": "labels.text.stroke",
+        "stylers": [{ "color": "#f5f5f5" }]
+    },
+    {
+        "featureType": "administrative.land_parcel",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#bdbdbd" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#eeeeee" }]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#757575" }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#e5e5e5" }]
+    },
+    {
+        "featureType": "poi.park",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
+    },
+    {
+        "featureType": "road",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#ffffff" }]
+    },
+    {
+        "featureType": "road.arterial",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#757575" }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#dadada" }]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#616161" }]
+    },
+    {
+        "featureType": "road.local",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
+    },
+    {
+        "featureType": "transit.line",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#e5e5e5" }]
+    },
+    {
+        "featureType": "transit.station",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#eeeeee" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "geometry",
+        "stylers": [{ "color": "#c9c9c9" }]
+    },
+    {
+        "featureType": "water",
+        "elementType": "labels.text.fill",
+        "stylers": [{ "color": "#9e9e9e" }]
+    }
+];
 
 const LiveTrackingPage = () => {
     const [selectedFilter, setSelectedFilter] = useState<'all' | 'Tracking' | 'Stopped' | 'Parked' | 'Offline'>('all');
@@ -80,6 +189,207 @@ const LiveTrackingPage = () => {
     const [mockBuses, setMockBuses] = useState<MockBus[]>([]);
     const [isPlaying, setIsPlaying] = useState(true);
     const animationRef = useRef<number>();
+
+    // Scenario Simulation State
+
+    const [scenarioActive, setScenarioActive] = useState(false);
+    const [scenarioPhase, setScenarioPhase] = useState<'idle' | 'approaching' | 'boarding' | 'transit' | 'arrived'>('idle');
+    const [scenarioBusPos, setScenarioBusPos] = useState(SCENARIO_BUS_START);
+    const [scenarioBusHeading, setScenarioBusHeading] = useState(0);
+    const [scenarioDetailedPath, setScenarioDetailedPath] = useState<{lat: number, lng: number}[]>([]);
+    const [scenarioStopIndices, setScenarioStopIndices] = useState<number[]>([]);
+    const [scenarioLoaded, setScenarioLoaded] = useState(false);
+    
+    // Imperative refs for smooth movement
+    const busMarkerRef = useRef<google.maps.Marker | null>(null);
+    const studentMarkersRef = useRef<Record<string, google.maps.Marker>>({});
+    const currentBusPosRef = useRef(SCENARIO_BUS_START);
+    const currentStudentPosRef = useRef<Record<string, {lat: number, lng: number}>>({});
+    const animationFrameRef = useRef<number>();
+
+
+    // Fetch directions
+    useEffect(() => {
+        if (!scenarioActive) {
+            setScenarioLoaded(false);
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+            return;
+        }
+
+        let isMounted = true;
+        const loadScenario = async () => {
+            if (!window.google || !window.google.maps) {
+                setTimeout(loadScenario, 100);
+                return;
+            }
+
+            const directionsService = new window.google.maps.DirectionsService();
+            try {
+                const result = await directionsService.route({
+                    origin: SCENARIO_BUS_START,
+                    destination: SCENARIO_DEST,
+                    waypoints: SCENARIO_STOPS.map(s => ({ location: s, stopover: true })),
+                    travelMode: window.google.maps.TravelMode.DRIVING
+                });
+                
+                if (result.routes && result.routes[0] && isMounted) {
+                    const path = result.routes[0].overview_path.map(p => ({ lat: p.lat(), lng: p.lng() }));
+                    
+                    // Map waypoints to closest path indices
+                    const stopIndices = SCENARIO_STOPS.map(stop => {
+                        let closestIdx = 0;
+                        let minD = Infinity;
+                        path.forEach((p, i) => {
+                            const d = Math.hypot(p.lat - stop.lat, p.lng - stop.lng);
+                            if (d < minD) { minD = d; closestIdx = i; }
+                        });
+                        return closestIdx;
+                    });
+
+                    setScenarioDetailedPath(path);
+                    setScenarioStopIndices(stopIndices);
+                    setScenarioLoaded(true);
+                }
+            } catch (e) {
+                console.error("Directions routing failed:", e);
+                // Fallback to straight lines
+                setScenarioDetailedPath([SCENARIO_BUS_START, ...SCENARIO_STOPS, SCENARIO_DEST]);
+                setScenarioStopIndices(SCENARIO_STOPS.map((_, i) => i + 1));
+                setScenarioLoaded(true);
+            }
+        };
+        
+        loadScenario();
+        
+        return () => {
+            isMounted = false;
+        }
+    }, [scenarioActive]);
+
+    useEffect(() => {
+        if (!scenarioActive || !scenarioLoaded || scenarioDetailedPath.length === 0) return;
+
+        let bPos = SCENARIO_BUS_START;
+        let students = JSON.parse(JSON.stringify(INITIAL_STUDENTS)) as SimStudent[];
+        let currentPhase = 'approaching';
+        let busTargetIdx = 1;
+        let currentStopIdx = 0; // index into SCENARIO_STOPS / scenarioStopIndices
+        
+        setScenarioPhase('approaching');
+        
+        let lastTime = performance.now();
+        let boardingTimeLeft = 0;
+
+        const animate = (time: number) => {
+            const dt = Math.min((time - lastTime) / 1000, 0.1);
+            lastTime = time;
+
+            const busSpeed = 0.001; 
+            const studentSpeed = 0.0008; 
+            
+            // Move Students
+            students.forEach(std => {
+                if (std.phase === 'walking') {
+                    const target = SCENARIO_STOPS[std.stopIdx];
+                    if (!target) return;
+                    
+                    const dist = Math.hypot(target.lat - std.pos.lat, target.lng - std.pos.lng);
+                    if (dist > 0.0001) {
+                        std.pos = {
+                            lat: std.pos.lat + ((target.lat - std.pos.lat) / dist) * studentSpeed * dt,
+                            lng: std.pos.lng + ((target.lng - std.pos.lng) / dist) * studentSpeed * dt
+                        };
+                    } else {
+                        std.pos = { ...target };
+                        std.phase = 'waiting';
+                    }
+                }
+                
+                // Sync with refs for re-render stability
+                currentStudentPosRef.current[std.id] = { ...std.pos };
+                
+                const marker = studentMarkersRef.current[std.id];
+                if (marker && typeof std.pos.lat === 'number' && !isNaN(std.pos.lat)) {
+                    if (std.phase === 'boarded') {
+                        if (marker.getVisible()) marker.setVisible(false);
+                    } else {
+                        if (!marker.getVisible()) marker.setVisible(true);
+                        marker.setPosition(new window.google.maps.LatLng(std.pos.lat, std.pos.lng));
+                    }
+                }
+            });
+
+            // Move Bus
+            if (currentPhase === 'approaching' || currentPhase === 'transit') {
+                if (busTargetIdx < scenarioDetailedPath.length) {
+                    const targetPos = scenarioDetailedPath[busTargetIdx];
+                    const bDist = Math.hypot(targetPos.lat - bPos.lat, targetPos.lng - bPos.lng);
+                    
+                    if (bDist > 0.00005) {
+                        bPos = {
+                            lat: bPos.lat + (targetPos.lat - bPos.lat) / bDist * busSpeed * dt,
+                            lng: bPos.lng + (targetPos.lng - bPos.lng) / bDist * busSpeed * dt
+                        };
+                        const heading = Math.atan2(targetPos.lng - bPos.lng, targetPos.lat - bPos.lat) * (180 / Math.PI);
+                        setScenarioBusHeading((heading + 360) % 360);
+                    } else {
+                        bPos = targetPos;
+                        
+                        // Check if we reached a stop
+                        if (currentStopIdx < scenarioStopIndices.length && busTargetIdx === scenarioStopIndices[currentStopIdx]) {
+                            currentPhase = 'boarding';
+                            setScenarioPhase('boarding');
+                            boardingTimeLeft = 2.0; // minimum wait time
+                        } else {
+                            busTargetIdx++;
+                        }
+                    }
+                } else {
+                    currentPhase = 'arrived';
+                    setScenarioPhase('arrived');
+                }
+                
+                currentBusPosRef.current = { ...bPos };
+                if (busMarkerRef.current && typeof bPos.lat === 'number' && !isNaN(bPos.lat)) {
+                    busMarkerRef.current.setPosition(new window.google.maps.LatLng(bPos.lat, bPos.lng));
+                }
+            } else if (currentPhase === 'boarding') {
+                // Check if all students for currentStopIdx are at the stop
+                const studentsAtStop = students.filter(s => s.stopIdx === currentStopIdx);
+                const allWaiting = studentsAtStop.every(s => s.phase === 'waiting' || s.phase === 'boarded');
+                
+                if (allWaiting) {
+                    boardingTimeLeft -= dt;
+                    if (boardingTimeLeft <= 0) {
+                        // Board them
+                        studentsAtStop.forEach(s => s.phase = 'boarded');
+                        currentPhase = 'transit';
+                        setScenarioPhase('transit');
+                        currentStopIdx++;
+                        busTargetIdx++;
+                    }
+                }
+            }
+            
+            if (currentPhase !== 'arrived') {
+                animationFrameRef.current = requestAnimationFrame(animate);
+            }
+        };
+
+        animationFrameRef.current = requestAnimationFrame(animate);
+
+        return () => {
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        };
+    }, [scenarioActive, scenarioLoaded, scenarioDetailedPath, scenarioStopIndices]);
+
+    const handleToggleScenario = () => {
+        setScenarioActive(!scenarioActive);
+        if (!scenarioActive) {
+            setMapCenter(SCENARIO_BUS_START);
+            setMapZoom(15);
+        }
+    };
 
     // API hooks
     const {
@@ -412,439 +722,161 @@ const LiveTrackingPage = () => {
         }
     };
 
-    // Loading state
-    if (isLoadingBuses || isLoadingRoutes || mockBuses.length === 0) {
-        return (
-            <div className="p-4 sm:p-6 bg-white min-h-screen">
-                <div className="flex justify-center items-center h-[700px]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0066CC]"></div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="p-4 sm:p-6 bg-white min-h-screen">
-            {/* Header with Statistics */}
-            <div className="mb-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-
-
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => setIsPlaying(!isPlaying)}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                        >
-                            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-                            {isPlaying ? 'Pause Simulation' : 'Play Simulation'}
-                        </button>
-
-                        <button
-                            onClick={handleRefresh}
-                            disabled={refreshing}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-                        >
-                            <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
-                            {refreshing ? 'Refreshing...' : 'Refresh'}
-                        </button>
-
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setViewMode('map')}
-                                className={`px-4 py-2 rounded-lg ${viewMode === 'map' ? 'bg-[#0066CC] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                            >
-                                Map View
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={`px-4 py-2 rounded-lg ${viewMode === 'list' ? 'bg-[#0066CC] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                            >
-                                List View
-                            </button>
-                        </div>
-                    </div>
+            {/* Header with Scenario Controls */}
+            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Road-Snapped Simulation</h1>
+                    <p className="text-gray-500">Explicit Scenario: Wuse 2 to Nile University (7 Students, 4 Stops)</p>
                 </div>
 
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all ${isPlaying ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                    >
+                        {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                        {isPlaying ? 'Pause Simulation' : 'Resume Simulation'}
+                    </button>
 
-            </div>
-
-
-
-            {/* Simulation Info */}
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <AlertCircle size={20} className="text-blue-600" />
-                        <span className="text-blue-800 font-medium">Simulation Mode Active</span>
-                    </div>
-                    <span className="text-sm text-blue-600">
-                        {isPlaying ? 'Buses are moving in real-time' : 'Simulation paused'}
-                    </span>
+                    <button
+                        onClick={handleToggleScenario}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-lg font-bold shadow-sm transition-all ${scenarioActive ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-[#0066CC] text-white hover:bg-blue-700'}`}
+                    >
+                        <Play size={20} />
+                        {scenarioActive ? 'Stop Simulation' : 'Start Simulation'}
+                    </button>
                 </div>
             </div>
 
-            {/* Main Content */}
-            {viewMode === 'map' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Map Section */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                            <LoadScript
-                                googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBjpTeVMERj4TPGN8RU6UOmCtt6nnYVVqk'}
-                                libraries={['places']}
-                            >
-                                <GoogleMap
-                                    mapContainerStyle={mapContainerStyle}
-                                    center={mapCenter}
-                                    zoom={mapZoom}
-                                    options={{
-                                        streetViewControl: false,
-                                        mapTypeControl: false,
-                                        fullscreenControl: true,
-                                        zoomControl: true,
-                                        styles: [
-                                            {
-                                                featureType: "poi",
-                                                elementType: "labels",
-                                                stylers: [{ visibility: "off" }]
-                                            }
-                                        ]
-                                    }}
-                                >
-                                    {/* District Markers */}
-                                    {districts.map((district) => (
-                                        <Marker
-                                            key={district.name}
-                                            position={district.position}
-                                            icon={getDistrictIcon()}
-                                            onClick={() => handleDistrictClick(district)}
-                                        />
-                                    ))}
-
-                                    {/* Route Paths */}
-                                    {Object.entries(routePaths).map(([routeName, path]) => (
-                                        <Polyline
-                                            key={routeName}
-                                            path={path}
-                                            options={{
-                                                strokeColor: '#0066CC',
-                                                strokeOpacity: 0.5,
-                                                strokeWeight: 2,
-                                                geodesic: true
-                                            }}
-                                        />
-                                    ))}
-
-                                    {/* Bus Markers with direction */}
-                                    {searchedBuses.map((bus) => (
-                                        <Marker
-                                            key={bus.busId}
-                                            position={{ lat: bus.latitude, lng: bus.longitude }}
-                                            icon={{
-                                                ...getBusIcon(bus.status),
-                                                // Add rotation for direction
-                                                rotation: bus.heading
-                                            }}
-                                            onClick={() => handleBusClick(bus)}
-                                        />
-                                    ))}
-
-                                    {/* Info Window for Selected Bus */}
-                                    {selectedBus && (
-                                        <InfoWindow
-                                            position={{ lat: selectedBus.latitude, lng: selectedBus.longitude }}
-                                            onCloseClick={() => setSelectedBus(null)}
-                                        >
-                                            <div className="p-3 text-[#343434] max-w-xs">
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div>
-                                                        <h3 className="font-semibold text-[#0066CC] text-lg">{selectedBus.busName}</h3>
-                                                        <p className="text-sm text-gray-600">{selectedBus.registrationName}</p>
-                                                    </div>
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedBus.status)}`}>
-                                                        {getStatusBadge(selectedBus.status)}
-                                                    </span>
-                                                </div>
-
-                                                <div className="space-y-2 text-sm">
-                                                    {selectedBus.routeName && (
-                                                        <div className="flex items-center gap-2">
-                                                            <RouteIcon size={14} className="text-green-600" />
-                                                            <span className="font-medium">Route:</span>
-                                                            <span>{selectedBus.routeName}</span>
-                                                        </div>
-                                                    )}
-
-                                                    {selectedBus.driverName && (
-                                                        <div className="flex items-center gap-2">
-                                                            <Users size={14} className="text-blue-600" />
-                                                            <span className="font-medium">Driver:</span>
-                                                            <span>{selectedBus.driverName}</span>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="flex items-center gap-2">
-                                                        <Navigation size={14} className="text-purple-600" />
-                                                        <span className="font-medium">Speed:</span>
-                                                        <span>{formatSpeed(selectedBus.speed)}</span>
-                                                        <span className="text-gray-500">• {getDirectionIcon(selectedBus.heading)}</span>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-2">
-                                                        <Clock size={14} className="text-gray-600" />
-                                                        <span className="font-medium">Updated:</span>
-                                                        <span>{calculateTimeAgo(selectedBus.lastUpdated)}</span>
-                                                    </div>
-
-                                                    {selectedBus.nextStopName && (
-                                                        <div className="flex items-center gap-2">
-                                                            <MapPin size={14} className="text-red-600" />
-                                                            <span className="font-medium">Next Stop:</span>
-                                                            <span>{selectedBus.nextStopName}</span>
-                                                            {selectedBus.estimatedArrival && (
-                                                                <span className="text-xs text-gray-500">
-                                                                    ({formatTime(selectedBus.estimatedArrival)})
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    <div className="flex items-center gap-4 pt-2 border-t border-gray-200">
-                                                        <div className="text-center">
-                                                            <div className="font-bold text-green-600">{selectedBus.passengersOnBoard}</div>
-                                                            <div className="text-xs text-gray-600">On Board</div>
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <div className="font-bold text-blue-600">{selectedBus.totalSeats}</div>
-                                                            <div className="text-xs text-gray-600">Total Seats</div>
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <div className="font-bold text-gray-600">
-                                                                {Math.round((selectedBus.passengersOnBoard / selectedBus.totalSeats) * 100)}%
-                                                            </div>
-                                                            <div className="text-xs text-gray-600">Capacity</div>
-                                                        </div>
-                                                    </div>
-
-                                                    <button
-                                                        onClick={() => handleStatusChange(selectedBus.busId, selectedBus.status)}
-                                                        className={`w-full mt-2 px-3 py-1 text-sm rounded-lg ${selectedBus.status === 'Tracking' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
-                                                    >
-                                                        {selectedBus.status === 'Tracking' ? 'Mark as Stopped' : 'Mark as Tracking'}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </InfoWindow>
-                                    )}
-                                </GoogleMap>
-                            </LoadScript>
-
-                            {/* Map Legend */}
-                            <div className="p-4 border-t border-gray-200">
-                                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                        <span className="text-sm text-gray-600">Active (Tracking)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                        <span className="text-sm text-gray-600">Stopped</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                        <span className="text-sm text-gray-600">Parked</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-                                        <span className="text-sm text-gray-600">Offline/Maintenance</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 bg-[#E7A533] rounded-full"></div>
-                                        <span className="text-sm text-gray-600">Districts</span>
-                                    </div>
+            {/* Simulation Status Overlay (Subtle) */}
+            {scenarioActive && (
+                <div className="mb-4 p-3 bg-purple-50 border border-purple-100 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex -space-x-2">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-purple-200 flex items-center justify-center overflow-hidden">
+                                    <Users size={14} className="text-purple-600" />
                                 </div>
-                            </div>
+                            ))}
                         </div>
-                    </div>
-
-                    {/* Bus List Sidebar */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-lg border border-gray-200 p-4 h-full">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-semibold text-gray-800">Active Buses</h3>
-                                <span className="text-sm text-gray-600">{searchedBuses.length} found</span>
-                            </div>
-
-                            <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                                {searchedBuses.map((bus) => (
-                                    <div
-                                        key={bus.busId}
-                                        className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedBus?.busId === bus.busId ? 'border-[#0066CC] bg-blue-50' : 'border-gray-200 hover:border-[#0066CC]'}`}
-                                        onClick={() => handleBusClick(bus)}
-                                    >
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <Bus size={16} className={
-                                                        bus.status === 'Tracking' ? 'text-green-600' :
-                                                            bus.status === 'Stopped' ? 'text-yellow-600' :
-                                                                bus.status === 'Parked' ? 'text-blue-600' : 'text-gray-400'
-                                                    } />
-                                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getStatusColor(bus.status)}`}>
-                                                        {getStatusBadge(bus.status)}
-                                                    </span>
-                                                </div>
-                                                <h4 className="font-semibold text-gray-800 mt-1">{bus.busName}</h4>
-                                                <p className="text-xs text-gray-600">{bus.registrationName}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-xs text-gray-500">
-                                                    {calculateTimeAgo(bus.lastUpdated)}
-                                                </div>
-                                                <div className="text-sm font-medium text-gray-700 mt-1">
-                                                    {formatSpeed(bus.speed)}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {bus.routeName && (
-                                            <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                                                <RouteIcon size={12} />
-                                                <span>{bus.routeName}</span>
-                                            </div>
-                                        )}
-
-                                        <div className="flex items-center justify-between text-xs">
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-1">
-                                                    <Users size={12} className="text-gray-400" />
-                                                    <span className="font-medium">{bus.passengersOnBoard}</span>
-                                                    <span className="text-gray-500">/{bus.totalSeats}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Navigation size={12} className="text-gray-400" />
-                                                    <span>{getDirectionIcon(bus.heading)}</span>
-                                                </div>
-                                            </div>
-
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleStatusChange(bus.busId, bus.status);
-                                                }}
-                                                className={`text-xs px-2 py-1 rounded ${bus.status === 'Tracking' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
-                                            >
-                                                {bus.status === 'Tracking' ? 'Stop' : 'Start'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {searchedBuses.length === 0 && (
-                                    <div className="text-center py-8">
-                                        <Bus size={32} className="mx-auto text-gray-400 mb-2" />
-                                        <p className="text-gray-600">No buses found</p>
-                                        <p className="text-sm text-gray-500">Try changing your filters or search</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                /* List View */
-                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="bg-gray-50 border-b border-gray-200">
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bus</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speed</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Passengers</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {searchedBuses.map((bus) => (
-                                    <tr
-                                        key={bus.busId}
-                                        className={`hover:bg-gray-50 cursor-pointer ${selectedBus?.busId === bus.busId ? 'bg-blue-50' : ''}`}
-                                        onClick={() => handleBusClick(bus)}
-                                    >
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="flex-shrink-0">
-                                                    <Bus size={20} className={
-                                                        bus.status === 'Tracking' ? 'text-green-600' :
-                                                            bus.status === 'Stopped' ? 'text-yellow-600' :
-                                                                bus.status === 'Parked' ? 'text-blue-600' : 'text-gray-400'
-                                                    } />
-                                                </div>
-                                                <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">{bus.busName}</div>
-                                                    <div className="text-sm text-gray-500">{bus.registrationName}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(bus.status)}`}>
-                                                {getStatusBadge(bus.status)}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">
-                                                {bus.routeName || 'No route assigned'}
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                {bus.driverName || 'No driver assigned'}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">{formatSpeed(bus.speed)}</div>
-                                            <div className="text-sm text-gray-500">{getDirectionIcon(bus.heading)}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">
-                                                {bus.passengersOnBoard}/{bus.totalSeats}
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                {Math.round((bus.passengersOnBoard / bus.totalSeats) * 100)}% full
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {calculateTimeAgo(bus.lastUpdated)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleStatusChange(bus.busId, bus.status);
-                                                }}
-                                                className={`px-3 py-1 rounded ${bus.status === 'Tracking' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
-                                            >
-                                                {bus.status === 'Tracking' ? 'Stop' : 'Start'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {searchedBuses.length === 0 && (
-                        <div className="text-center py-12">
-                            <Bus size={48} className="mx-auto text-gray-400 mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No buses found</h3>
-                            <p className="text-gray-500 max-w-md mx-auto">
-                                No buses match your current filters. Try adjusting your search or filters to see more results.
+                        <div>
+                            <p className="text-sm font-semibold text-purple-900">
+                                {scenarioPhase === 'boarding' ? 'Picking up students...' : 
+                                 scenarioPhase === 'transit' ? 'In transit to Nile University' :
+                                 scenarioPhase === 'approaching' ? 'Bus approaching pickup stop' :
+                                 scenarioPhase === 'arrived' ? 'Journey Completed' : 'Waiting to start'}
                             </p>
+                            <p className="text-xs text-purple-600">7 Students • 4 Pickup Locations</p>
                         </div>
+                    </div>
+                    {scenarioPhase === 'arrived' && (
+                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full animate-pulse">
+                            SUCCESS
+                        </span>
                     )}
                 </div>
             )}
+
+            {/* Main Map Content - Full Width */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative">
+                <LoadScript
+                    googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBjpTeVMERj4TPGN8RU6UOmCtt6nnYVVqk'}
+                    libraries={['places']}
+                >
+                    <GoogleMap
+                        mapContainerStyle={{ width: '100%', height: 'calc(100vh - 280px)', minHeight: '600px' }}
+                        center={mapCenter}
+                        zoom={mapZoom}
+                        options={{
+                            streetViewControl: false,
+                            mapTypeControl: false,
+                            fullscreenControl: true,
+                            zoomControl: true,
+                            styles: MAP_STYLES
+                        }}
+                    >
+                        {/* Scenario Route */}
+                        {scenarioActive && scenarioDetailedPath.length > 0 && (
+                            <Polyline
+                                path={scenarioDetailedPath}
+                                options={{
+                                    strokeColor: '#8B5CF6',
+                                    strokeOpacity: 0.8,
+                                    strokeWeight: 6,
+                                    geodesic: true,
+                                    zIndex: 5
+                                }}
+                            />
+                        )}
+
+                        {/* Explicit Scenario Markers */}
+                        {scenarioActive && (
+                            <>
+                                {/* Start & Finish Points */}
+                                <Marker
+                                    position={SCENARIO_BUS_START}
+                                    label="START"
+                                    icon={{ url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' }}
+                                />
+                                <Marker
+                                    position={SCENARIO_DEST}
+                                    label="FINISH"
+                                    icon={{ url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' }}
+                                />
+
+                                {/* Pickup Stops */}
+                                {SCENARIO_STOPS.map((stop, idx) => (
+                                    <Marker
+                                        key={`stop_${idx}`}
+                                        position={stop}
+                                        icon={{
+                                            path: window.google.maps.SymbolPath.CIRCLE,
+                                            fillColor: '#8B5CF6',
+                                            fillOpacity: 1,
+                                            strokeWeight: 2,
+                                            strokeColor: '#FFFFFF',
+                                            scale: 8,
+                                        }}
+                                        label={{
+                                            text: `${idx + 1}`,
+                                            color: "white",
+                                            fontSize: "10px",
+                                            fontWeight: "bold"
+                                        }}
+                                    />
+                                ))}
+
+                                {/* Student Markers */}
+                                {INITIAL_STUDENTS.map(std => (
+                                    <Marker
+                                        key={std.id}
+                                        position={currentStudentPosRef.current[std.id] || std.pos}
+                                        onLoad={(m) => { if (m) studentMarkersRef.current[std.id] = m; }}
+                                        icon={{
+                                            url: '/avatar.png',
+                                            scaledSize: typeof window !== 'undefined' && window.google ? new window.google.maps.Size(28, 28) : undefined,
+                                        }}
+                                        zIndex={20}
+                                    />
+                                ))}
+
+                                {/* Bus Marker */}
+                                <Marker
+                                    position={currentBusPosRef.current}
+                                    onLoad={(m) => { if (m) busMarkerRef.current = m; }}
+                                    icon={{
+                                        url: '/bus-marker.png',
+                                        scaledSize: typeof window !== 'undefined' && window.google ? new window.google.maps.Size(54, 54) : undefined,
+                                    }}
+                                    zIndex={30}
+                                />
+                            </>
+                        )}
+                    </GoogleMap>
+                </LoadScript>
+            </div>
         </div>
     );
 };

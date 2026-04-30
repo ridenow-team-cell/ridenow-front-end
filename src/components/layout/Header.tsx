@@ -112,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuToggle }) => {
                                     <p className="text-xs text-gray-500">Admin</p>
                                 </div>
                                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center">
-                                    <img src="/assets/user.png" alt="User Profile" />
+                                    <img src="https://icons.veryicon.com/png/o/miscellaneous/two-color-icon-library/user-286.png" alt="User Profile" />
                                 </div>
                             </button>
                             <DropdownMenu
